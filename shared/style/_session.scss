@@ -1,15 +1,15 @@
 @use "tokens" as *;
 
-// ── Выбор сессии ──────────────────────────────────────────────────────────────
-// Плоская строка внизу колонки: глиф + имя сессии + стрелка. Существует только на
-// экране входа — блокировщик возвращает в уже запущенную сессию.
+// ── Session picker ────────────────────────────────────────────────────────────
+// A flat row at the bottom of the column: glyph, session name, arrow. It exists
+// on the login screen only — the locker returns you to a session already running.
 
 session-picker {
   margin-top: 32px;
 
-  // MenuButton заворачивает содержимое в собственную GtkButton, и та приносит
-  // с собой всю фурнитуру темы (фон, рамку, тень). Сбрасываем её здесь, иначе
-  // строка читается как кнопка, а не как строка.
+  // MenuButton wraps its content in a GtkButton of its own, and that button
+  // brings the whole theme's furniture with it (background, border, shadow).
+  // Reset it here, otherwise the row reads as a button rather than a row.
   > button {
     padding: 6px 12px 6px 8px;
     border: none;
@@ -47,8 +47,8 @@ session-picker {
 
 }
 
-// Выпадающий список сессий. Popover рисует свою тень сам, поэтому здесь только
-// фон и радиус — как у меню в myBar.
+// The session dropdown. The popover draws its own shadow, so only background and
+// radius are set here — as with myBar's menus.
 popover.session-list {
   > contents {
     background: $bg;

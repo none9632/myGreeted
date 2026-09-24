@@ -4,20 +4,20 @@ import { createState, onMount, type Accessor } from "gnim"
 import { timeout } from "ags/time"
 import Rail, { type RailProps } from "./Rail"
 
-// ── Каркас экрана ─────────────────────────────────────────────────────────────
-// Общая рама для обоих экранов: обои → затемнение → рельс → колонка контента.
-// Различается только содержимое колонки, которое приходит из greeter/ или lock/.
+// ── Screen frame ──────────────────────────────────────────────────────────────
+// The shared frame for both screens: wallpaper → dimming → rail → content column.
+// Only the column's contents differ, and those come from greeter/ or lock/.
 
-// Задержка перед снятием стартового состояния — примерно один кадр. Сама
-// длительность перехода живёт в screen-body (shared/style/_base.scss).
+// Delay before the starting state is dropped — roughly one frame. The transition
+// duration itself lives in screen-body (shared/style/_base.scss).
 const FRAME_MS = 16
 
 export interface ScreenProps extends RailProps {
-  /** Путь к обоям; null — остаётся сплошной тёмный фон. */
+  /** Path to the wallpaper; null leaves the flat dark background. */
   wallpaper: string | null
   /**
-   * Рисовать ли рельс и колонку. На дополнительных мониторах экран остаётся
-   * просто затемнёнными обоями — управление живёт на основном.
+   * Whether to draw the rail and the column. On secondary monitors the screen
+   * stays plain dimmed wallpaper — the controls live on the primary one.
    */
   content?: boolean
   children: JSX.Element | JSX.Element[]
@@ -26,8 +26,8 @@ export interface ScreenProps extends RailProps {
 export default function Screen(props: ScreenProps) {
   const [shown, setShown] = createState(false)
 
-  // Проявляем на кадр позже карты окна, иначе GTK применит конечное состояние
-  // сразу и перехода не будет видно.
+  // Fade in a frame after the window maps, otherwise GTK applies the final state
+  // straight away and the transition is never seen.
   onMount(() => timeout(FRAME_MS, () => setShown(true)))
 
   return (

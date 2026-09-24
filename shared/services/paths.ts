@@ -1,14 +1,14 @@
 import GLib from "gi://GLib"
 import { GREETER_DEV } from "./env"
 
-// ── Пути к ресурсам и состоянию ───────────────────────────────────────────────
-// В бою greeter работает от пользователя `greeter`, у которого нет домашней
-// папки (`/` в /etc/passwd). Поэтому ни один путь не должен вести в ~: ресурсы
-// лежат в /usr/share/my-greeter, изменяемое состояние — в /var/cache/my-greeter
-// (каталог создаёт установщик и отдаёт его этому пользователю).
+// ── Resource and state paths ──────────────────────────────────────────────────
+// In production the greeter runs as the `greeter` user, who has no home
+// directory (`/` in /etc/passwd). So no path may lead into ~: resources live in
+// /usr/share/my-greeter and mutable state in /var/cache/my-greeter (a directory
+// the installer creates and hands to that user).
 //
-// В отладке всё то же самое переезжает в домашние каталоги, чтобы запуск из
-// живой сессии ничего не требовал и никуда не писал от root.
+// In debug mode all of it moves into the home directories, so running from a live
+// session needs nothing and writes nothing as root.
 
 export const RESOURCE_DIR = "/usr/share/my-greeter"
 
@@ -16,19 +16,18 @@ export const CACHE_DIR = GREETER_DEV
   ? `${GLib.get_user_cache_dir()}/my-greeter`
   : "/var/cache/my-greeter"
 
-/** Список wayland-сессий. Путь один и тот же в обоих режимах. */
+/** Where wayland sessions are listed. The same path in both modes. */
 export const SESSION_DIR = "/usr/share/wayland-sessions"
 
 /**
- * Обои экрана входа.
+ * The login screen's wallpaper.
  *
- * В бою это файл, который кладёт post-hook matugen рядом с цветами. В отладке
- * подхватываем текущие обои живой сессии, так что экран выглядит ровно так, как
- * будет выглядеть после установки.
+ * In production this is the file matugen's post-hook drops next to the colours.
  */
 export function greeterWallpaper(): string | null {
-  // В отладке экран запускается из живой сессии, поэтому показываем её обои —
-  // ровно те же, что окажутся в /usr/share/my-greeter после matugen.
+  // In debug the screen runs from a live session, so show that session's
+  // wallpaper — exactly the one that will end up in /usr/share/my-greeter after
+  // matugen runs.
   if (GREETER_DEV) return currentWallpaper()
 
   return firstExisting([
@@ -39,8 +38,8 @@ export function greeterWallpaper(): string | null {
 }
 
 /**
- * Обои живой сессии — их и показывает блокировщик. Путь пишет в кэш скрипт
- * update-wall при каждой смене картинки.
+ * The live session's wallpaper — what the locker shows. The path is written to
+ * the cache by the update-wall script every time the picture changes.
  */
 export function currentWallpaper(): string | null {
   const state = `${GLib.get_user_cache_dir()}/current_wallpaper.txt`

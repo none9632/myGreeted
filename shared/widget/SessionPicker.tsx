@@ -1,13 +1,13 @@
 import { Gtk } from "ags/gtk4"
 import { For, type Accessor } from "gnim"
 
-// ── Выбор сессии ──────────────────────────────────────────────────────────────
-// Плоская строка внизу колонки, раскрывающаяся в список. Только на экране входа:
-// блокировщик возвращает в уже запущенную сессию.
+// ── Session picker ────────────────────────────────────────────────────────────
+// A flat row at the bottom of the column that opens into a list. Login screen
+// only: the locker returns you to a session that is already running.
 
 export interface Session {
-  id: string // имя .desktop-файла без расширения
-  name: string // Name= из .desktop
+  id: string // .desktop file name without the extension
+  name: string // Name= from the .desktop
   exec: string // Exec=
   desktopNames?: string // DesktopNames= → XDG_CURRENT_DESKTOP
 }
@@ -19,8 +19,8 @@ export default function SessionPicker(props: {
 }) {
   let popover: Gtk.Popover
 
-  // Стрелку рисуем сами (session-arrow); встроенную MenuButton без
-  // alwaysShowArrow и не показывает.
+  // We draw the arrow ourselves (session-arrow); without alwaysShowArrow the
+  // MenuButton does not draw one.
   return (
     <menubutton cssName="session-picker" halign={Gtk.Align.START}>
       <box>

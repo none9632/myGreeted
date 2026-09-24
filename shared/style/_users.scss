@@ -1,9 +1,9 @@
 @use "tokens" as *;
 
-// ── Ряд пользователей ─────────────────────────────────────────────────────────
-// Аватарок в системе нет (/var/lib/AccountsService/icons пуст), поэтому вместо
-// фото — монограмма: диск с первой буквой имени. Активный диск заливается
-// акцентом, остальные остаются чипами.
+// ── User row ──────────────────────────────────────────────────────────────────
+// There are no avatars on this system (/var/lib/AccountsService/icons is empty),
+// so instead of a photo each user gets a monogram: a disc with the first letter
+// of their name. The selected disc fills with the accent; the rest stay chips.
 
 user-row {
   margin-bottom: 28px;
@@ -55,8 +55,8 @@ user-name {
   font-weight: 500;
 }
 
-// Одинокое имя — режим блокировки и вход с единственным пользователем: то же
-// оформление, но без кнопки и без ряда.
+// A lone name — the lock screen, and logging in with a single user: same styling,
+// but without a button and without the row.
 user-single {
   margin-bottom: 28px;
 

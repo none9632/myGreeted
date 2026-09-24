@@ -2,10 +2,10 @@ import GLib from "gi://GLib"
 import { Gtk } from "ags/gtk4"
 import { createPoll } from "ags/time"
 
-// ── Часы и дата ───────────────────────────────────────────────────────────────
-// Верх колонки на обоих экранах. Формат даты берётся из локали (GLib.DateTime
-// уважает LC_TIME); в продакшне локаль задаётся в конфиге greeter-сессии, иначе
-// Hyprland стартует в C и дата выйдет английской.
+// ── Clock and date ────────────────────────────────────────────────────────────
+// The top of the column on both screens. The date format comes from the locale
+// (GLib.DateTime honours LC_TIME); in production the locale is set by the greeter
+// session config, otherwise Hyprland starts under C and the date comes out plain.
 
 const fmt = (pattern: string) => GLib.DateTime.new_now_local().format(pattern) ?? ""
 

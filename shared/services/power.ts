@@ -1,20 +1,20 @@
 import { execAsync } from "ags/process"
 
-// ── Питание ───────────────────────────────────────────────────────────────────
-// В отладочном режиме кнопки ничего не делают: экран тестируется в живой сессии,
-// и случайное нажатие не должно её выключить.
+// ── Power ─────────────────────────────────────────────────────────────────────
+// In debug mode the buttons do nothing: the screen is being tested inside a live
+// session, and a stray click must not shut it down.
 
 export function createPower(live: boolean) {
   function run(action: string, cmd: string[]) {
     if (!live) {
-      console.log(`[отладка] ${action}: ${cmd.join(" ")} — не выполняю`)
+      console.log(`[debug] ${action}: ${cmd.join(" ")} — not running it`)
       return
     }
-    execAsync(cmd).catch((e) => console.error(`${action} не удалось:`, e))
+    execAsync(cmd).catch((e) => console.error(`${action} failed:`, e))
   }
 
   return {
-    poweroff: () => run("выключение", ["systemctl", "poweroff"]),
-    reboot: () => run("перезагрузка", ["systemctl", "reboot"]),
+    poweroff: () => run("power off", ["systemctl", "poweroff"]),
+    reboot: () => run("reboot", ["systemctl", "reboot"]),
   }
 }

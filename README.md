@@ -1,112 +1,119 @@
 # my-greeter
 
-Экран входа для [greetd](https://sr.ht/~kennylevinsen/greetd/) и экран блокировки
-для Hyprland на [AGS 3](https://github.com/Aylur/ags) + Astal (GTK4).
+A login screen for [greetd](https://sr.ht/~kennylevinsen/greetd/) and a lock
+screen for Hyprland, built on [AGS 3](https://github.com/Aylur/ags) + Astal
+(GTK4).
 
-Оба экрана — одна композиция, **«рельс»**: узкая колонка управления у левого
-края (питание, раскладка), крупная типографика и ввод — в колонке контента.
-Ничего не центрировано; сетку задаёт короткий акцентный штрих под датой.
-Поле пароля — не рамка, а строка с подчёркиванием, которое наливается акцентом
-при фокусе и краснеет при неверном пароле.
+Both screens share one composition, **the rail**: a narrow column of controls at
+the left edge (power, keyboard layout), with large type and the input in the
+content column. Nothing is centred; the grid is set by a short accent rule under
+the date. The password field is not a box but a line whose underline fills with
+the accent on focus and turns red on a wrong password.
 
-Стили, виджеты и сервисы общие; различается только набор блоков в колонке:
+The styles, widgets and services are shared; only the set of blocks in the column
+differs:
 
-| | вход | блокировка |
+| | login | lock |
 |---|---|---|
-| часы и дата | ✓ | ✓ |
-| выбор пользователя | ✓ (скрыт, если он один) | — имя текущего |
-| выбор сессии | ✓ | — |
-| питание, раскладка | ✓ | ✓ |
-| проверка пароля | greetd (AstalGreet) | PAM (AstalAuth) |
-| поверхность | layer-shell | ext-session-lock |
+| clock and date | ✓ | ✓ |
+| user picker | ✓ (hidden with a single user) | — current user's name |
+| session picker | ✓ | — |
+| power, keyboard layout | ✓ | ✓ |
+| password check | greetd (AstalGreet) | PAM (AstalAuth) |
+| surface | layer-shell | ext-session-lock |
 
-## Требования
+## Requirements
 
 - `aylurs-gtk-shell-git` (AGS 3.x), `libastal-greetd`, `libastal-auth`, `libastal-hyprland`
-- `gtk4-layer-shell` (даёт и `Gtk4SessionLock`)
-- `dart-sass` — SCSS собирается при каждом запуске
-- шрифты `inter` и `ttf-iosevka-nerd`
-- `greetd` и системный пользователь `greeter` (для экрана входа)
+- `gtk4-layer-shell` (it also provides `Gtk4SessionLock`)
+- `dart-sass` — the SCSS is compiled on every startup
+- the `inter` and `ttf-iosevka-nerd` fonts
+- `greetd` and the `greeter` system user (for the login screen)
 
-## Структура
+## Layout
 
 ```
 shared/
-  style/      colors.scss (цвета) + _tokens.scss (всё остальное) + партиалы
+  style/      colors.scss (colours) + _tokens.scss (everything else) + partials
   widget/     Screen, Rail, Clock, PasswordField, UserPicker, SessionPicker
   services/   env, paths, users, sessions, state, keyboard, power, auth
-greeter/      экран входа: свой app.ts, style.scss и services/auth.ts (greetd)
-lock/         экран блокировки: свой app.ts, style.scss и services/auth.ts (PAM)
-packaging/    matugen, конфиг Hyprland для greeter-сессии, установщик
+greeter/      login screen: its own app.ts, style.scss and services/auth.ts (greetd)
+lock/         lock screen: its own app.ts, style.scss and services/auth.ts (PAM)
+packaging/    matugen, the Hyprland config for the greeter session, the installer
 ```
 
-Цвета живут **только** в `shared/style/colors.scss` — плоский список `$имя: #hex`,
-который целиком перегенерируется шаблоном matugen. Всё остальное (прозрачность,
-градиенты, тени, кривые анимаций) собирается из них в `_tokens.scss`.
+Colour lives **only** in `shared/style/colors.scss` — a flat list of
+`$name: #hex` that the matugen template regenerates wholesale. Everything else
+(opacity, gradients, shadows, animation curves) is assembled from it in
+`_tokens.scss`.
 
-## Запуск в текущей сессии
+## Running inside the current session
 
-Оба экрана тестируются обычным `ags run`, ничего системного трогать не нужно.
+Both screens are testable with a plain `ags run`; nothing system-wide has to be
+touched.
 
 ```bash
-# Экран входа. Без GREETD_SOCK работает заглушка: верный пароль — test,
-# последний выбор пишется в ~/.cache/my-greeter/, кнопки питания только логируют.
+# The login screen. Without GREETD_SOCK it runs on a stub: the correct password
+# is "test", the last choice is written to ~/.cache/my-greeter/, and the power
+# buttons only log.
 ags run ~/Projects/myGreeter/greeter/app.ts
 
-# Экран блокировки. MY_LOCK_DEV=1 рисует обычное окно поверх сессии (Escape
-# закрывает) вместо настоящего ext-session-lock. Пароль проверяет честный PAM.
+# The lock screen. MY_LOCK_DEV=1 draws an ordinary window over the session
+# (Escape quits) instead of a real ext-session-lock. The password is checked by
+# honest PAM either way.
 MY_LOCK_DEV=1 ags run ~/Projects/myGreeter/lock/app.ts
 ```
 
-Оба используют свои имена инстансов (`my-greeter`, `my-lock`), поэтому работают
-одновременно с основным шеллом. Погасить: `ags quit -i my-greeter`.
+Both use their own instance names (`my-greeter`, `my-lock`), so they run happily
+alongside the main shell. To stop one: `ags quit -i my-greeter`.
 
-## Установка экрана входа
+## Installing the login screen
 
 ```bash
 ./packaging/install.sh
 ```
 
-Скрипт раскладывает приложение в `/usr/share/my-greeter/`, создаёт
-`/var/cache/my-greeter/` для пользователя `greeter` и ставит минимальный конфиг
-Hyprland. Системные файлы и службы он **не трогает** — в конце печатает, что
-осталось сделать руками (прописать `/etc/greetd/config.toml`, переключить
-`sddm` → `greetd`).
+The script lays the application out in `/usr/share/my-greeter/`, creates
+`/var/cache/my-greeter/` for the `greeter` user and installs a minimal Hyprland
+config. It does **not** touch system files or services — at the end it prints
+what is left to do by hand (write `/etc/greetd/config.toml`, switch `sddm` →
+`greetd`).
 
-Почему так: greeter работает от пользователя `greeter`, у которого нет домашней
-папки. Поэтому в боевом режиме ни один путь не ведёт в `~` — ресурсы лежат в
-`/usr/share/my-greeter/`, изменяемое состояние в `/var/cache/my-greeter/`.
+Why it works that way: the greeter runs as the `greeter` user, who has no home
+directory. So in production no path leads into `~` — resources live in
+`/usr/share/my-greeter/` and mutable state in `/var/cache/my-greeter/`.
 
-## Экран блокировки
+## The lock screen
 
 ```bash
 install -m 755 packaging/my-lock ~/.local/bin/my-lock
 ```
 
-Затем заменить `hyprlock` в `~/.config/hypr/hyprland.lua`:
+Then replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
 
 ```lua
 hl.exec_cmd("swayidle -w before-sleep 'my-lock'")
 ```
 
-## Цвета из matugen
+## Colours from matugen
 
-Сейчас `colors.scss` содержит doom-one — ту же палитру, что myBar, rofi и
-hyprlock. Чтобы цвета шли за обоями, допишите в `~/.config/matugen/config.toml`
-блок из `packaging/matugen/config.toml` и запускайте:
+Right now `colors.scss` holds doom-one — the same palette myBar, rofi and
+hyprlock use. To make the colours follow the wallpaper, append the block from
+`packaging/matugen/config.toml` to `~/.config/matugen/config.toml` and run:
 
 ```bash
-matugen image /путь/к/обоям
+matugen image /path/to/wallpaper
 ```
 
-Шаблон перезапишет `shared/style/colors.scss`, а post-hook скопирует цвета и
-сами обои в `/usr/share/my-greeter/`, где их ждёт боевой greeter.
+The template overwrites `shared/style/colors.scss`, and the post-hook copies both
+the colours and the wallpaper itself into `/usr/share/my-greeter/`, where the
+production greeter expects them.
 
-## Известные мелочи
+## Known small things
 
-- Дата берётся из локали. Система стоит на `en_US.UTF-8`, поэтому дата
-  английская, а подписи русские. Лечится генерацией `ru_RU.UTF-8` в
-  `/etc/locale.gen` или сменой подписей.
-- Тема GTK `Skeuos-Blue-Dark` рассчитана на GTK3 и при старте сыплет в лог
-  `Theme parser error: "shade" is not a valid color name`. На вид не влияет:
-  все виджеты используют свои `cssName`, и правила темы до них не достают.
+- The date comes from the locale. This system runs `en_US.UTF-8`, so the date is
+  English. Changing it means generating another locale in `/etc/locale.gen`.
+- The GTK theme `Skeuos-Blue-Dark` targets GTK3 and pours
+  `Theme parser error: "shade" is not a valid color name` into the log at
+  startup. It has no visual effect: every widget uses its own `cssName`, so the
+  theme's rules never reach them.

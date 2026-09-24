@@ -1,4 +1,5 @@
-// Бандл стилей экрана блокировки: то же, что у входа, минус выбор сессии.
+// Stylesheet bundle for the lock screen: same as the login screen, minus the
+// session picker.
 @use "../shared/style/base";
 @use "../shared/style/rail";
 @use "../shared/style/clock";

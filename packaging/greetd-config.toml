@@ -1,5 +1,5 @@
-# Образец /etc/greetd/config.toml. Скопировать вручную — установщик системные
-# файлы не трогает.
+# A sample /etc/greetd/config.toml. Copy it by hand — the installer does not
+# touch system files.
 
 [terminal]
 vt = 1

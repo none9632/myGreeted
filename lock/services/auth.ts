@@ -1,16 +1,16 @@
 import AstalAuth from "gi://AstalAuth"
 import { AuthError } from "../../shared/services/auth"
 
-// ── Проверка пароля через PAM ─────────────────────────────────────────────────
-// В отличие от экрана входа, здесь заглушка не нужна ни в каком режиме: PAM
-// просто проверяет пароль текущего пользователя и ничего в системе не меняет,
-// так что блокировщик одинаково честен и в отладке, и в бою.
+// ── Checking the password through PAM ─────────────────────────────────────────
+// Unlike the login screen, no stub is needed here in any mode: PAM merely checks
+// the current user's password and changes nothing in the system, so the locker is
+// equally honest in debug and in production.
 //
-// Сервис по умолчанию — astal-auth; его файл ставит сам libastal-auth
-// (/etc/pam.d/astal-auth, включает login). Ничего настраивать не нужно.
+// The default service is astal-auth; its file ships with libastal-auth itself
+// (/etc/pam.d/astal-auth, which includes login). Nothing needs configuring.
 
 export interface LockAuth {
-  /** Проверить пароль текущего пользователя. Бросает AuthError. */
+  /** Check the current user's password. Throws AuthError. */
   authenticate(password: string): Promise<void>
   readonly kind: string
 }
@@ -25,9 +25,9 @@ export function createLockAuth(): LockAuth {
             AstalAuth.Pam.authenticate_finish(res!)
             resolve()
           } catch (e) {
-            // PAM возвращает свой текст («Authentication failure»), и он
-            // одинаков для неверного пароля и для заблокированного аккаунта.
-            // Показывать его дословно бессмысленно.
+            // PAM returns its own text ("Authentication failure"), and it reads
+            // the same for a wrong password and for a locked account. Showing it
+            // verbatim would say nothing.
             reject(new AuthError(pamMessage(e)))
           }
         })
@@ -38,6 +38,6 @@ export function createLockAuth(): LockAuth {
 
 function pamMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error)
-  if (/auth|incorrect|failure/i.test(raw)) return "Неверный пароль"
-  return raw || "Не удалось разблокировать"
+  if (/auth|incorrect|failure/i.test(raw)) return "Wrong password"
+  return raw || "Could not unlock"
 }

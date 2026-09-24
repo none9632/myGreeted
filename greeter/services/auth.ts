@@ -3,24 +3,25 @@ import { AuthError, verifyStub } from "../../shared/services/auth"
 import { GREETER_DEV } from "../../shared/services/env"
 import type { Session } from "../../shared/services/sessions"
 
-// ── Вход через greetd ─────────────────────────────────────────────────────────
-// AstalGreet.login_with_env делает все три шага протокола разом: create_session,
-// post_auth с паролем и start_session. Если пароль неверный, промис отклоняется
-// и greetd сам отменяет незавершённую сессию.
+// ── Logging in through greetd ─────────────────────────────────────────────────
+// AstalGreet.login_with_env performs all three steps of the protocol at once:
+// create_session, post_auth with the password, and start_session. If the password
+// is wrong the promise rejects and greetd cancels the half-built session itself.
 //
-// Без GREETD_SOCK подключаться некуда, поэтому там работает заглушка: экран
-// целиком тестируется в живой сессии обычным `ags run`.
+// Without GREETD_SOCK there is nothing to connect to, so a stub runs instead: the
+// whole screen is testable inside a live session with a plain `ags run`.
 
 export interface GreeterAuth {
-  /** Проверить пароль и запустить сессию. Бросает AuthError. */
+  /** Check the password and start the session. Throws AuthError. */
   login(username: string, password: string, session: Session): Promise<void>
-  /** Человекочитаемое имя режима — уходит в лог при старте. */
+  /** A human-readable name for the mode — it goes into the log at startup. */
   readonly kind: string
 }
 
 /**
- * Переменные окружения сессии. greetd передаёт их процессу как есть, а из них
- * порталы, XDG-автозапуск и сами приложения понимают, куда они попали.
+ * The session's environment variables. greetd passes them to the process as-is,
+ * and from them the portals, XDG autostart and the applications themselves work
+ * out where they have landed.
  */
 function sessionEnv(session: Session): string[] {
   const env = [
@@ -34,10 +35,10 @@ function sessionEnv(session: Session): string[] {
 export function createGreeterAuth(): GreeterAuth {
   if (GREETER_DEV) {
     return {
-      kind: "заглушка (GREETD_SOCK не задан)",
+      kind: "stub (GREETD_SOCK is not set)",
       async login(username, password, session) {
         await verifyStub(password)
-        console.log(`вход разрешён: ${username} → ${session.name}`)
+        console.log(`login accepted: ${username} → ${session.name}`)
       },
     }
   }
@@ -60,15 +61,15 @@ export function createGreeterAuth(): GreeterAuth {
 }
 
 /**
- * greetd отвечает одной строкой на все случаи жизни, и чаще всего это
- * «Authentication failure». Переводим знакомые варианты, остальное показываем
- * как есть — лучше непонятный текст, чем проглоченная ошибка.
+ * greetd answers every situation with a single string, and most of the time that
+ * string is "Authentication failure". Rewrite the familiar ones and show the rest
+ * verbatim — an opaque message beats a swallowed error.
  */
 function greetdMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error)
 
-  if (/auth/i.test(raw) && /fail|incorrect|invalid/i.test(raw)) return "Неверный пароль"
-  if (/no such user|unknown user/i.test(raw)) return "Такого пользователя нет"
-  if (/permission denied/i.test(raw)) return "Вход запрещён"
-  return raw || "Не удалось войти"
+  if (/auth/i.test(raw) && /fail|incorrect|invalid/i.test(raw)) return "Wrong password"
+  if (/no such user|unknown user/i.test(raw)) return "No such user"
+  if (/permission denied/i.test(raw)) return "Login not permitted"
+  return raw || "Could not log in"
 }

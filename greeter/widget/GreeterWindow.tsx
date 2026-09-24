@@ -16,13 +16,13 @@ import PasswordField from "../../shared/widget/PasswordField"
 import UserPicker, { UserLabel, type User } from "../../shared/widget/UserPicker"
 import SessionPicker from "../../shared/widget/SessionPicker"
 
-// ── Экран входа ───────────────────────────────────────────────────────────────
-// Композиция «рельс»: управление в колонке у левого края, часы и ввод — в
-// колонке контента. Вся работа с greetd спрятана за createGreeterAuth(), так
-// что здесь остаётся только состояние экрана.
+// ── Login screen ──────────────────────────────────────────────────────────────
+// The rail composition: controls in a column at the left edge, clock and input in
+// the content column. Everything to do with greetd hides behind
+// createGreeterAuth(), so what is left here is screen state.
 
-// Всё это читается один раз на старте: в greeter'е система не меняется под
-// ногами, а перечитывать на каждый монитор незачем.
+// All of this is read once at startup: nothing about the system shifts underfoot
+// inside a greeter, and re-reading it per monitor would be pointless.
 const USERS: User[] = listUsers()
 const SESSIONS: Session[] = listSessions()
 const LAST = readLastChoice()
@@ -32,7 +32,7 @@ const power = createPower(!GREETER_DEV)
 const keyboard = createKeyboard()
 const wallpaper = greeterWallpaper()
 
-/** Прошлый выбор, если он всё ещё существует; иначе первый в списке. */
+/** Last time's choice, if it still exists; otherwise the first in the list. */
 function initialUser(): string {
   const remembered = USERS.find((u) => u.name === LAST.user)
   return (remembered ?? USERS[0])?.name ?? ""
@@ -54,21 +54,21 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
   async function submit(password: string) {
     const chosen = session.get()
     if (!chosen) {
-      setError("Не найдено ни одной сессии")
+      setError("No sessions found")
       return
     }
 
     setBusy(true)
     setError("")
     try {
-      // Выбор запоминаем до входа: после успешного start_session greetd гасит
-      // greeter, и дописать что-либо мы уже не успеем.
+      // Save the choice before logging in: once start_session succeeds greetd
+      // puts the greeter out, and there is no time left to write anything.
       writeLastChoice({ user: user.get(), session: chosen.id })
       await auth.login(user.get(), password, chosen)
 
-      // greetd запускает сессию только после того, как greeter завершился.
-      // Выходим сами; дальше конфиг Hyprland доделывает `hyprctl dispatch exit`.
-      // В отладке остаёмся на экране — там выходить некуда и незачем.
+      // greetd only starts the session once the greeter has exited. So exit;
+      // `hyprctl dispatch exit` in the Hyprland config finishes the job. In debug
+      // we stay on screen — there is nowhere and no reason to go.
       if (!GREETER_DEV) app.quit()
     } catch (e) {
       setError(authMessage(e))
@@ -77,7 +77,7 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
     }
   }
 
-  // Выбирать не из чего — ряд монограмм только занимал бы место.
+  // Nothing to choose between — the monogram row would only take up space.
   const single = USERS.length <= 1
 
   return (
@@ -93,8 +93,8 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
         Astal.WindowAnchor.RIGHT
       }
       exclusivity={Astal.Exclusivity.IGNORE}
-      // Ввод забирает только основной монитор: иначе на второй экран уедет
-      // второе поле пароля и они начнут драться за фокус.
+      // Only the primary monitor takes input: otherwise a second password field
+      // ends up on the second screen and the two fight over focus.
       keymode={primary ? Astal.Keymode.EXCLUSIVE : Astal.Keymode.NONE}
       layer={Astal.Layer.OVERLAY}
       application={app}

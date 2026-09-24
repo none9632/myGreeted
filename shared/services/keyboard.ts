@@ -1,13 +1,14 @@
 import AstalHyprland from "gi://AstalHyprland"
 import { createState, type Accessor } from "gnim"
 
-// ── Раскладка клавиатуры ──────────────────────────────────────────────────────
-// И экран входа, и блокировщик работают внутри сессии Hyprland, так что
-// состояние берётся прямо у него. Если Hyprland недоступен (другой композитор,
-// запуск из TTY), чип замирает на "en" и перестаёт быть кнопкой.
+// ── Keyboard layout ───────────────────────────────────────────────────────────
+// Both the login screen and the locker run inside a Hyprland session, so the
+// state comes straight from it. If Hyprland is unavailable (a different
+// compositor, a run from a TTY), the chip freezes on "en" and stops being a
+// button.
 //
-// Запрос идёт через IPC самого Astal, а не через `hyprctl … | jq`: у greeter'а
-// окружение голое, и лишней зависимости на jq там может не оказаться.
+// The query goes through Astal's own IPC rather than `hyprctl … | jq`: the
+// greeter's environment is bare, and jq may well not be part of it.
 
 const SHORT: Record<string, string> = {
   "English (US)": "en",
@@ -15,7 +16,7 @@ const SHORT: Record<string, string> = {
   "Russian (US, phonetic)": "ru",
 }
 
-/** «English (US)» → «en»: без словаря сгодятся первые две буквы языка. */
+/** "English (US)" → "en": without a dictionary the first two letters will do. */
 function short(layout: string): string {
   return SHORT[layout] ?? layout.slice(0, 2).toLowerCase()
 }
@@ -26,16 +27,17 @@ interface Device {
   active_keymap: string
 }
 
-// Виртуальные клавиатуры (экранные, инструменты ввода текста, удалённый ввод)
-// Hyprland называет так и при подключении отбирает у физической флаг main, а
-// раскладку отдаёт как "error". Брать их значение нельзя — чип врал бы всё
-// время, пока такое устройство подключено.
+// Virtual keyboards (on-screen ones, text-injection tools, remote input) are
+// named like this by Hyprland, and on connecting they take the `main` flag away
+// from the physical keyboard while reporting their layout as "error". Their
+// value must not be used — the chip would lie for as long as such a device is
+// attached.
 const VIRTUAL = /^hl-virtual-keyboard/
 const NO_KEYMAP = "error"
 
 export interface Keyboard {
   layout: Accessor<string>
-  /** Переключить раскладку; undefined, если Hyprland недоступен. */
+  /** Switch the layout; undefined when Hyprland is unavailable. */
   next: (() => void) | undefined
 }
 
@@ -44,13 +46,13 @@ export function createKeyboard(): Keyboard {
 
   const hypr = AstalHyprland.get_default()
   if (!hypr) {
-    console.warn("Hyprland недоступен — раскладка не отслеживается")
+    console.warn("Hyprland unavailable — not tracking the keyboard layout")
     return { layout, next: undefined }
   }
 
-  // Значение из сигнала не берём: keyboard-layout прилетает от любого
-  // устройства, а нам нужна раскладка физической клавиатуры. Поэтому на каждое
-  // событие перечитываем состояние целиком и сами выбираем нужное устройство.
+  // We do not take the value out of the signal: keyboard-layout arrives from any
+  // device, and what we want is the physical keyboard's layout. So on every event
+  // we re-read the whole state and pick the device ourselves.
   function refresh() {
     hypr!.message_async("j/devices", (_source, res) => {
       try {
@@ -62,7 +64,7 @@ export function createKeyboard(): Keyboard {
           setLayout(short(main.active_keymap))
         }
       } catch (e) {
-        console.warn("не прочитать текущую раскладку:", e)
+        console.warn("could not read the current layout:", e)
       }
     })
   }

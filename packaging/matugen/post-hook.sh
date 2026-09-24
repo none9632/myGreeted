@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Разносит свежие цвета и обои туда, откуда их читает боевой greeter.
+# Distributes fresh colours and wallpaper to where the production greeter reads
+# them from.
 #
-# Вызывается matugen'ом после генерации шаблона, первым аргументом получает путь
-# к картинке. Копирует оба ресурса в /usr/share/my-greeter — каталог системный,
-# поэтому шаг делается через sudo. Всё остальное matugen делает сам.
+# matugen calls this after rendering the template, passing the path to the image
+# as the first argument. It copies both resources into /usr/share/my-greeter;
+# that directory is system-owned, so the step goes through sudo. matugen does
+# everything else itself.
 #
-# Экран блокировки сюда не заглядывает: он работает от живого пользователя и
-# читает обои прямо из сессии.
+# The lock screen does not look here: it runs as the live user and reads the
+# wallpaper straight out of the session.
 
 set -euo pipefail
 
@@ -16,16 +18,16 @@ COLORS="$PROJECT/shared/style/colors.scss"
 TARGET=/usr/share/my-greeter
 
 if [[ ! -d "$TARGET" ]]; then
-  echo "post-hook: $TARGET не существует — сначала выполните packaging/install.sh" >&2
+  echo "post-hook: $TARGET does not exist — run packaging/install.sh first" >&2
   exit 0
 fi
 
-# Цвета кладутся в установленное дерево проекта, а не рядом с ним: AGS собирает
-# SCSS при каждом запуске и читает именно этот файл.
+# The colours go into the installed project tree rather than next to it: AGS
+# compiles the SCSS on every startup and reads exactly this file.
 sudo install -m 0644 "$COLORS" "$TARGET/shared/style/colors.scss"
 
 if [[ -n "$WALLPAPER" && -f "$WALLPAPER" ]]; then
   sudo install -m 0644 "$WALLPAPER" "$TARGET/wallpaper"
 fi
 
-echo "post-hook: цвета и обои обновлены в $TARGET"
+echo "post-hook: colours and wallpaper updated in $TARGET"

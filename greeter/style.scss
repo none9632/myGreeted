@@ -1,5 +1,6 @@
-// Бандл стилей экрана входа. Партиалы общие, подключается только то, что экран
-// действительно рисует, — у блокировщика набор короче (нет выбора сессии).
+// Stylesheet bundle for the login screen. The partials are shared; only what the
+// screen actually draws gets pulled in — the locker's list is shorter (it has no
+// session picker).
 @use "../shared/style/base";
 @use "../shared/style/rail";
 @use "../shared/style/clock";

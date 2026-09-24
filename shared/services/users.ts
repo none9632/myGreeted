@@ -4,12 +4,12 @@ import type { User } from "../widget/UserPicker"
 
 export type { User }
 
-// ── Пользователи ──────────────────────────────────────────────────────────────
-// Берём из /etc/passwd напрямую: у greeter'а нет ни D-Bus-сессии, ни
-// AccountsService, а сам файл читается кем угодно.
+// ── Users ─────────────────────────────────────────────────────────────────────
+// Read straight out of /etc/passwd: the greeter has neither a D-Bus session nor
+// AccountsService, and the file itself is world-readable.
 //
-// Отбор: UID в диапазоне обычных аккаунтов и оболочка, позволяющая войти. Этого
-// достаточно — системные и служебные аккаунты отсеиваются обоими условиями.
+// The filter: a UID inside the range of ordinary accounts, and a shell that
+// permits logging in. That is enough — system and service accounts fail both.
 
 const UID_MIN = 1000
 const UID_MAX = 60000
@@ -20,7 +20,7 @@ export function listUsers(): User[] {
   try {
     passwd = readFile("/etc/passwd")
   } catch (e) {
-    console.error("не прочитать /etc/passwd:", e)
+    console.error("could not read /etc/passwd:", e)
     return []
   }
 
@@ -33,7 +33,7 @@ export function listUsers(): User[] {
     if (!Number.isFinite(uid) || uid < UID_MIN || uid > UID_MAX) continue
     if (!shell || NO_LOGIN.test(shell)) continue
 
-    // GECOS — поле из пяти запятых, человеку интересна только первая часть.
+    // GECOS is a five-comma field; only its first part is of any interest here.
     const full = (gecos ?? "").split(",")[0].trim()
     users.push({ name, label: full || name })
   }
@@ -41,7 +41,7 @@ export function listUsers(): User[] {
   return users.sort((a, b) => a.label.localeCompare(b.label))
 }
 
-/** Текущий пользователь — для экрана блокировки. */
+/** The current user — for the lock screen. */
 export function currentUser(): User {
   const name = GLib.get_user_name()
   const full = GLib.get_real_name()

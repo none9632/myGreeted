@@ -5,9 +5,9 @@ import type { Session } from "../widget/SessionPicker"
 
 export type { Session }
 
-// ── Сессии ────────────────────────────────────────────────────────────────────
-// Читаем .desktop-файлы из /usr/share/wayland-sessions штатным парсером GLib: он
-// сам разбирает группы, кавычки и локализованные Name[ru].
+// ── Sessions ──────────────────────────────────────────────────────────────────
+// Read the .desktop files in /usr/share/wayland-sessions with GLib's own parser:
+// it handles the groups, the quoting and localised Name[xx] keys for us.
 
 const GROUP = GLib.KEY_FILE_DESKTOP_GROUP
 
@@ -18,7 +18,7 @@ export function listSessions(): Session[] {
   try {
     entries = dir.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NONE, null)
   } catch (e) {
-    console.error(`не прочитать ${SESSION_DIR}:`, e)
+    console.error(`could not read ${SESSION_DIR}:`, e)
     return []
   }
 
@@ -36,7 +36,7 @@ export function listSessions(): Session[] {
   return sessions.sort((a, b) => a.name.localeCompare(b.name))
 }
 
-/** Битый или скрытый .desktop — не повод падать: пропускаем только его. */
+/** A broken or hidden .desktop is no reason to fall over: skip just that one. */
 function parse(path: string, id: string): Session | null {
   const kf = new GLib.KeyFile()
   try {
@@ -50,14 +50,14 @@ function parse(path: string, id: string): Session | null {
       desktopNames: optional(kf, "DesktopNames"),
     }
   } catch (e) {
-    console.warn(`пропускаю ${path}:`, e)
+    console.warn(`skipping ${path}:`, e)
     return null
   }
 }
 
-// g_key_file_has_key в gjs не пробрасывается, а Hidden и DesktopNames в
-// сессиях чаще отсутствуют, чем присутствуют. Поэтому просто пробуем прочитать
-// и считаем отсутствие ключа нормальным случаем, а не ошибкой.
+// g_key_file_has_key is not exposed in gjs, and Hidden and DesktopNames are more
+// often absent than present in session files. So we simply try to read them and
+// treat a missing key as the normal case rather than as an error.
 function hidden(kf: GLib.KeyFile): boolean {
   try {
     return kf.get_boolean(GROUP, "Hidden")

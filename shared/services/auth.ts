@@ -1,32 +1,33 @@
 import { timeout } from "ags/time"
 
-// ── Аутентификация: общее ─────────────────────────────────────────────────────
-// Экран входа и блокировщик проверяют пароль по-разному (greetd против PAM), но
-// наружу оба отдают одно и то же: вернулся промис — пустили, кинул AuthError —
-// показываем текст. Пароль не логируется и нигде не хранится, кроме аргумента
-// вызова, — поэтому ни одна функция здесь его не печатает и не сохраняет.
+// ── Authentication: the shared parts ──────────────────────────────────────────
+// The login screen and the locker check passwords differently (greetd versus
+// PAM), but both hand out the same thing: a promise that resolves means you are
+// in, an AuthError means we show its text. The password is never logged and
+// never stored anywhere but the call argument — which is why nothing here prints
+// or keeps it.
 
 export class AuthError extends Error {}
 
-/** Пароль отладочной заглушки. Настоящая проверка его никогда не видит. */
+/** The debug stub's password. The real check never sees it. */
 const STUB_PASSWORD = "test"
 
 /**
- * Заглушка для разработки. Держит искусственную паузу, чтобы состояние
- * «проверяем» реально было видно и его можно было отладить.
+ * The development stub. It holds an artificial pause so the "checking" state is
+ * actually visible and can be worked on.
  */
 export function verifyStub(password: string): Promise<void> {
   return new Promise((resolve, reject) => {
     timeout(600, () => {
       if (password === STUB_PASSWORD) resolve()
-      else reject(new AuthError("Неверный пароль"))
+      else reject(new AuthError("Wrong password"))
     })
   })
 }
 
-/** Привести любую ошибку к строке, которую не стыдно показать на экране. */
+/** Reduce any error to a string that is fit to put on screen. */
 export function authMessage(error: unknown): string {
   if (error instanceof AuthError) return error.message
   if (error instanceof Error && error.message) return error.message
-  return "Не удалось войти"
+  return "Could not log in"
 }

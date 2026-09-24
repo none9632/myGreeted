@@ -1,11 +1,13 @@
-# Фрагмент конфига matugen для my-greeter. Дописать в ~/.config/matugen/config.toml
-# (или положить целиком, если своего конфига ещё нет) и запускать так:
+# A matugen config fragment for my-greeter. Append it to
+# ~/.config/matugen/config.toml (or drop it in whole, if you do not have a config
+# yet) and run:
 #
-#   matugen image /путь/к/обоям
+#   matugen image /path/to/wallpaper
 #
-# Шаблон пишет цвета в рабочую копию проекта, post-hook разносит цвета и обои
-# по /usr/share/my-greeter, куда greeter может дотянуться от пользователя
-# `greeter` — у него нет домашней папки, и ~ ему недоступен.
+# The template writes the colours into the working copy; the post-hook then
+# distributes the colours and the wallpaper into /usr/share/my-greeter, where the
+# greeter can reach them as the `greeter` user — who has no home directory and
+# therefore no access to ~.
 
 [config]
 reload_apps = false

@@ -1,20 +1,20 @@
 import { Gtk } from "ags/gtk4"
 import { createComputed, createState, onMount, type Accessor } from "gnim"
 
-// ── Поле пароля ───────────────────────────────────────────────────────────────
-// Строка с наливающимся подчёркиванием вместо рамки: в покое — тонкая линия, при
-// фокусе акцентная полоса растёт слева направо, при ошибке краснеет.
+// ── Password field ────────────────────────────────────────────────────────────
+// A line with a filling underline instead of a box: at rest a thin rule, on focus
+// an accent bar grows left to right, on failure it turns red.
 //
-// Сам пароль нигде не хранится и не логируется: он читается из виджета в момент
-// отправки, уходит в onSubmit и тут же затирается в поле.
+// The password itself is never stored or logged: it is read out of the widget at
+// submit time, handed to onSubmit and immediately wiped from the field.
 
 export interface PasswordFieldProps {
-  /** Идёт проверка: поле блокируется, чтобы не улетел второй запрос. */
+  /** A check is in flight: the field locks so a second request cannot escape. */
   busy: Accessor<boolean>
-  /** Текст ошибки; пустая строка прячет строку целиком. */
+  /** Error text; an empty string hides the line entirely. */
   error: Accessor<string>
   onSubmit: (password: string) => void
-  /** Пользователь начал править ввод — родитель гасит старую ошибку. */
+  /** The user started editing — the parent clears the stale error. */
   onInput?: () => void
   placeholder?: string
 }
@@ -23,7 +23,7 @@ export default function PasswordField(props: PasswordFieldProps) {
   const [focused, setFocused] = createState(false)
   let entry: Gtk.Entry
 
-  // Фокус и ошибка — два независимых источника классов у одной полосы.
+  // Focus and error are two independent sources of classes on the same bar.
   const fill = createComputed(() =>
     [focused() ? "focused" : "", props.error() ? "error" : ""].filter(Boolean).join(" "),
   )
@@ -36,11 +36,11 @@ export default function PasswordField(props: PasswordFieldProps) {
   }
 
   onMount(() => {
-    // Фокус в поле сразу при старте — вводить пароль можно не трогая мышь.
+    // Focus lands in the field at startup — no need to reach for the mouse.
     entry.grab_focus()
 
-    // И возвращаем его после каждой неудачной попытки: на время проверки поле
-    // становится нечувствительным, а вместе с этим теряет фокус.
+    // And it comes back after every failed attempt: while a check runs the field
+    // goes insensitive, and loses focus along with it.
     props.busy.subscribe(() => {
       if (!props.busy.get()) entry.grab_focus()
     })
@@ -58,13 +58,13 @@ export default function PasswordField(props: PasswordFieldProps) {
         $={(self) => (entry = self as Gtk.Entry)}
         visibility={false}
         hexpand
-        placeholderText={props.placeholder ?? "Пароль"}
+        placeholderText={props.placeholder ?? "Password"}
         sensitive={props.busy.as((b) => !b)}
         onNotifyText={() => props.onInput?.()}
         onActivate={submit}
       >
-        {/* GtkEntry отдаёт фокус внутреннему GtkText, поэтому его собственное
-            has-focus всегда false — состояние приходится слушать контроллером. */}
+        {/* GtkEntry hands focus to an inner GtkText, so its own has-focus is
+            always false — the state has to come from a controller. */}
         <Gtk.EventControllerFocus
           onEnter={() => setFocused(true)}
           onLeave={() => setFocused(false)}

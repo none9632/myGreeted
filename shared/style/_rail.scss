@@ -1,9 +1,9 @@
 @use "tokens" as *;
 
-// ── Рельс ─────────────────────────────────────────────────────────────────────
-// Узкая колонка во всю высоту у левого края: всё второстепенное (питание,
-// раскладка, сессия) вынесено сюда, чтобы колонка контента осталась чистой.
-// Полупрозрачная подложка + блюр Hyprland отделяют её от обоев.
+// ── Rail ──────────────────────────────────────────────────────────────────────
+// A narrow full-height column at the left edge: everything secondary (power,
+// keyboard layout) is moved here so the content column stays clean. A
+// translucent backing plus Hyprland's blur separate it from the wallpaper.
 
 rail {
   min-width: $rail-width;
@@ -12,7 +12,8 @@ rail {
   padding: 18px 0;
 }
 
-// Кнопка рельса: круг без рамки, глиф в $subtext, при наведении — чип и акцент.
+// A rail button: a borderless circle, glyph in $subtext, turning into a chip with
+// accent colour on hover.
 rail-button {
   min-width: 44px;
   min-height: 44px;
@@ -37,7 +38,7 @@ rail-button {
     color: $fg;
   }
 
-  // Выключение — единственное действие, которое нельзя отменить: красная подсветка.
+  // Powering off is the one action that cannot be taken back: highlight it red.
   &.danger:hover {
     color: $red;
   }
@@ -47,7 +48,7 @@ rail-button {
   }
 }
 
-// Чип раскладки: тот же прямоугольный чип, что и в правой панели myBar.
+// Layout chip: the same rectangular chip myBar's right panel uses.
 rail-chip {
   min-width: 44px;
   padding: 4px 0;

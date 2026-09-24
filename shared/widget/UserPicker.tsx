@@ -2,13 +2,13 @@ import { Gtk } from "ags/gtk4"
 import { For, type Accessor } from "gnim"
 import Monogram from "./Monogram"
 
-// ── Выбор пользователя ────────────────────────────────────────────────────────
-// Ряд монограмм над полем пароля. Если пользователь один (а также на экране
-// блокировки) ряд не рисуется — вместо него статичное имя.
+// ── User picker ───────────────────────────────────────────────────────────────
+// A row of monograms above the password field. With a single user — and on the
+// lock screen — the row is not drawn at all; a static name takes its place.
 
 export interface User {
-  name: string // логин
-  label: string // полное имя из GECOS, либо логин
+  name: string // login
+  label: string // full name from GECOS, or the login
 }
 
 export function UserLabel({ user }: { user: User }) {

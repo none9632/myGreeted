@@ -1,10 +1,10 @@
 import { Gtk } from "ags/gtk4"
 import type { Accessor } from "gnim"
 
-// ── Рельс ─────────────────────────────────────────────────────────────────────
-// Колонка у левого края, одинаковая на обоих экранах: питание сверху, чип
-// раскладки снизу. Всё, что не является вводом, живёт здесь — так колонка
-// контента остаётся чистой типографикой.
+// ── Rail ──────────────────────────────────────────────────────────────────────
+// The column at the left edge, identical on both screens: power at the top, the
+// keyboard layout chip at the bottom. Everything that is not input lives here, so
+// the content column stays pure typography.
 
 export interface RailProps {
   layout: Accessor<string> | string

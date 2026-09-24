@@ -1,26 +1,26 @@
 @use "tokens" as *;
 
-// ── Каркас экрана ─────────────────────────────────────────────────────────────
-// Оба экрана (вход и блокировка) рисуют одно и то же: обои → затемнение → рельс
-// слева → колонка контента. Разница только в наборе блоков внутри колонки.
+// ── Screen frame ──────────────────────────────────────────────────────────────
+// Both screens (login and lock) draw the same thing: wallpaper → dimming → rail
+// on the left → content column. Only the blocks inside the column differ.
 
 window.Greeter,
 window.Lock {
-  background: $bg-deep; // виден лишь если обои не загрузились
+  background: $bg-deep; // only ever visible if the wallpaper failed to load
   color: $fg;
   font-family: $font;
 }
 
-// Обои. Размытие делаем сами: блюр Hyprland по layer-rule размывает то, что
-// ПОД поверхностью, а картинка лежит внутри неё. Ориентир — hyprlock
-// (blur_size 10, blur_passes 3), переведённый в один проход GTK.
+// The wallpaper. We blur it ourselves: Hyprland's layer-rule blur blurs whatever
+// sits BEHIND the surface, and the picture lives inside it. Keyed to hyprlock
+// (blur_size 10, blur_passes 3), folded into a single GTK pass.
 picture.screen-bg {
   filter: blur(16px);
 }
 
-// Затемнение. Не ровная плёнка, а градиент: левый край, где живут рельс и
-// колонка, уходит почти в чёрный, справа картинка остаётся читаемой. Это же
-// подпирает асимметрию композиции — тёмная сторона совпадает с текстовой.
+// Dimming. Not a flat film but a gradient: the left edge, where the rail and the
+// column live, goes nearly black, while the picture stays readable on the right.
+// It also props up the asymmetry — the dark side is the text side.
 screen-scrim {
   background: linear-gradient(
     to right,
@@ -32,8 +32,8 @@ screen-scrim {
 }
 
 screen-body {
-  // Появление всего экрана: контент проявляется на кадр позже карты окна, класс
-  // .shown ставится из Screen.tsx. Длительность держать в паре с ANIM_MS там.
+  // The whole screen fades in: content appears a frame after the window maps,
+  // with the .shown class set from Screen.tsx.
   opacity: 0;
   transition: opacity $dur-slow $ease-out;
 

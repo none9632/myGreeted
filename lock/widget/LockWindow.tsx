@@ -12,20 +12,20 @@ import Clock from "../../shared/widget/Clock"
 import PasswordField from "../../shared/widget/PasswordField"
 import { UserLabel, type User } from "../../shared/widget/UserPicker"
 
-// ── Экран блокировки ──────────────────────────────────────────────────────────
-// Та же композиция, что у входа, минус выбор пользователя и сессии: блокировщик
-// всегда возвращает в уже запущенную сессию текущего пользователя.
+// ── Lock screen ───────────────────────────────────────────────────────────────
+// The same composition as the login screen, minus the user and session pickers:
+// the locker always returns to the current user's already-running session.
 //
-// Пароль всегда проверяет настоящий PAM — он ничего в системе не меняет, так
-// что заглушка здесь не нужна. Отладочным остаётся только само окно: боевой
-// ext-session-lock действительно заблокирует живую сессию.
+// The password is always checked by real PAM — it changes nothing in the system,
+// so no stub is needed. Only the window stays a debug affair: a live
+// ext-session-lock would genuinely lock the session.
 
 const auth = createLockAuth()
 const power = createPower(!LOCK_DEV)
 const keyboard = createKeyboard()
 const wallpaper = currentWallpaper()
 
-/** Содержимое экрана: одинаково и для отладочного окна, и для session-lock. */
+/** The screen's contents: identical for the debug window and for session-lock. */
 export function LockContent(props: { user: User; onUnlock: () => void }) {
   const [busy, setBusy] = createState(false)
   const [error, setError] = createState("")
@@ -63,7 +63,7 @@ export function LockContent(props: { user: User; onUnlock: () => void }) {
   )
 }
 
-/** Отладочное окно: обычный layer-shell поверх сессии, Escape закрывает. */
+/** The debug window: a plain layer-shell surface over the session, Escape quits. */
 export default function LockWindow(gdkmonitor: Gdk.Monitor, user: User) {
   return (
     <window
@@ -85,7 +85,7 @@ export default function LockWindow(gdkmonitor: Gdk.Monitor, user: User) {
       <Gtk.EventControllerKey
         propagationPhase={Gtk.PropagationPhase.CAPTURE}
         onKeyPressed={(_self, keyval) => {
-          // Только в отладке: боевой блокировщик не должен уметь закрываться.
+          // Debug only: a live locker must not be able to close itself.
           if (keyval === Gdk.KEY_Escape) {
             app.quit()
             return true

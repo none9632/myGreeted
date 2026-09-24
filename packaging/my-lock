@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Запуск экрана блокировки. Положить в ~/.local/bin/my-lock.
+# Starts the lock screen. Put this in ~/.local/bin/my-lock.
 #
-# Блокировщик — отдельный процесс, а не часть шелла: если шелл перезапустится
-# или упадёт, блокировка должна остаться на экране. Второй запуск безвреден —
-# AGS увидит уже работающий инстанс и выйдет.
+# The locker is a separate process rather than part of the shell: if the shell
+# restarts or crashes, the lock has to stay on screen. Running it twice is
+# harmless — AGS sees the instance already running and exits.
 
 exec ags run "${MY_GREETER_DIR:-$HOME/Projects/myGreeter}/lock/app.ts"

@@ -8,14 +8,15 @@ import { currentUser } from "../shared/services/users"
 import LockWindow, { LockContent } from "./widget/LockWindow"
 import type { User } from "../shared/widget/UserPicker"
 
-// Экран блокировки — отдельный процесс, а не часть шелла: если шелл упадёт или
-// будет перезапущен, блокировка должна остаться на экране.
+// The lock screen is its own process rather than part of the shell: if the shell
+// crashes or gets restarted, the lock has to stay on screen.
 //
-// Два режима запуска:
-//   MY_LOCK_DEV=1  — обычное layer-shell окно поверх сессии, Escape закрывает;
-//                    так экран правится и проверяется без риска запереть себя.
-//   по умолчанию   — настоящий ext-session-lock: compositor гасит всё остальное,
-//                    и выйти можно только верным паролем.
+// Two run modes:
+//   MY_LOCK_DEV=1  — an ordinary layer-shell window over the session, Escape
+//                    quits; this is how the screen is worked on without the risk
+//                    of locking yourself out.
+//   default        — a real ext-session-lock: the compositor blanks everything
+//                    else, and the only way out is the right password.
 app.start({
   instanceName: "my-lock",
   css: style,
@@ -33,16 +34,16 @@ app.start({
 
 function lockSession(user: User) {
   if (!Gtk4SessionLock.is_supported()) {
-    console.error("композитор не умеет ext-session-lock — блокировать нечем")
+    console.error("the compositor does not support ext-session-lock — nothing to lock with")
     app.quit()
     return
   }
 
   const lock = Gtk4SessionLock.Instance.new()
 
-  // Поверхность на каждый монитор. Сигнал приходит по разу на каждый экран,
-  // который существует на момент блокировки, и потом на каждый подключённый;
-  // библиотека сама размапит и уничтожит окна, когда блокировка кончится.
+  // One surface per monitor. The signal fires once for every screen that exists
+  // when the lock starts, and then for each one plugged in afterwards; the
+  // library unmaps and destroys the windows itself once the lock ends.
   lock.connect("monitor", (_lock, monitor: Gdk.Monitor) => {
     const window = new Gtk.Window({ application: app, name: "lock" })
     window.add_css_class("Lock")
@@ -51,16 +52,16 @@ function lockSession(user: User) {
   })
 
   lock.connect("failed", () => {
-    console.error("не удалось заблокировать сессию: блокировку держит кто-то ещё")
+    console.error("could not lock the session: someone else is holding the lock")
     app.quit()
   })
 
-  // Разблокировали — нашим паролем или снаружи композитором. В обоих случаях
-  // процессу больше нечего делать.
+  // Unlocked — either by our password or from outside by the compositor. Either
+  // way the process has nothing left to do.
   lock.connect("unlocked", () => app.quit())
 
   if (!lock.lock()) {
-    console.error("не удалось заблокировать сессию")
+    console.error("could not lock the session")
     app.quit()
   }
 }

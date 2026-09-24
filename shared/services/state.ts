@@ -2,12 +2,14 @@ import GLib from "gi://GLib"
 import { readFile, writeFile } from "ags/file"
 import { CACHE_DIR } from "./paths"
 
-// ── Запоминание последнего выбора ─────────────────────────────────────────────
-// Кого и во что пускали в прошлый раз. Лежит в /var/cache/my-greeter (в отладке
-// — в ~/.cache/my-greeter): пользователь `greeter` пишет туда, и только туда.
+// ── Remembering the last choice ───────────────────────────────────────────────
+// Who was let in last time, and into what. It lives in /var/cache/my-greeter (or
+// ~/.cache/my-greeter in debug): the `greeter` user can write there, and only
+// there.
 //
-// Файл — просто подсказка интерфейсу. Любая ошибка чтения или записи не должна
-// мешать входу, поэтому все операции молча деградируют до значений по умолчанию.
+// The file is no more than a hint to the interface. No read or write failure may
+// stand in the way of logging in, so every operation degrades silently to the
+// defaults.
 
 const FILE = `${CACHE_DIR}/last-session.json`
 
@@ -31,6 +33,6 @@ export function writeLastChoice(choice: LastChoice): void {
     GLib.mkdir_with_parents(CACHE_DIR, 0o755)
     writeFile(FILE, JSON.stringify(choice))
   } catch (e) {
-    console.warn("не сохранить последний выбор:", e)
+    console.warn("could not save the last choice:", e)
   }
 }

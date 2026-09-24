@@ -1,22 +1,23 @@
-// ШАБЛОН MATUGEN — не редактировать результат, редактировать этот файл.
+// MATUGEN TEMPLATE — do not edit the output, edit this file.
 //
-// Собирается в shared/style/colors.scss и в /usr/share/my-greeter/colors.scss.
-// Имена переменных совпадают один в один с тем, что ждут партиалы в
-// shared/style/, поэтому подключение matugen не требует правок в коде.
+// It is rendered into shared/style/colors.scss and into
+// /usr/share/my-greeter/shared/style/colors.scss. The variable names match one
+// for one what the partials in shared/style/ expect, so adopting matugen needs
+// no code changes.
 //
-// Соответствие ролей Material You и токенов темы:
-//   surface           → фон панелей ($bg)
-//   surface_container → тёмная подложка ($bg-deep)
-//   surface_variant   → чипы ($surface)
-//   on_surface        → основной текст ($fg)
-//   outline           → вторичный текст ($subtext)
-//   primary           → акцент ($accent)
-//   on_primary        → текст поверх акцента ($accent-fg)
-//   secondary         → вторая точка акцентного градиента ($cyan)
+// How Material You roles map onto the theme's tokens:
+//   surface           → panel background ($bg)
+//   surface_container → the dark inset ($bg-deep)
+//   surface_variant   → chips ($surface)
+//   on_surface        → primary text ($fg)
+//   outline           → secondary text ($subtext)
+//   primary           → accent ($accent)
+//   on_primary        → text on top of the accent ($accent-fg)
+//   secondary         → second stop of the accent gradient ($cyan)
 //
-// $cyan берётся именно из secondary, а не из оттенка primary: обе точки
-// градиента (штрих под датой, подчёркивание пароля, монограмма) должны
-// отличаться на глаз, иначе градиент выродится в заливку.
+// $cyan comes from secondary rather than from a shade of primary on purpose:
+// both stops of the gradient (the rule under the date, the password underline,
+// the monogram) have to differ to the eye, or the gradient collapses into a fill.
 
 $bg:        {{colors.surface.default.hex}};
 $bg-deep:   {{colors.surface_container_lowest.default.hex}};
@@ -29,8 +30,8 @@ $accent-fg: {{colors.on_primary.default.hex}};
 $red:       {{colors.error.default.hex}};
 $cyan:      {{colors.secondary.default.hex}};
 
-// Ниже — остаток палитры doom-one. Сейчас экраны его не используют, но
-// переменные существуют, чтобы colors.scss оставался полной палитрой.
+// Below is the rest of the doom-one palette. The screens do not currently use
+// it, but the variables exist so colors.scss stays a complete palette.
 $green:     {{colors.tertiary.default.hex}};
 $orange:    {{colors.secondary_fixed_dim.default.hex}};
 $purple:    {{colors.tertiary_fixed_dim.default.hex}};
