@@ -55,14 +55,21 @@ touched.
 ```bash
 # The login screen. Without GREETD_SOCK it runs on a stub: the correct password
 # is "test", the last choice is written to ~/.cache/my-greeter/, and the power
-# buttons only log.
-ags run ~/Projects/myGreeter/greeter/app.ts
+# buttons only log. Escape quits.
+GDK_DEBUG=high-depth ags run ~/Projects/myGreeter/greeter/app.ts
 
 # The lock screen. MY_LOCK_DEV=1 draws an ordinary window over the session
 # (Escape quits) instead of a real ext-session-lock. The password is checked by
 # honest PAM either way.
-MY_LOCK_DEV=1 ags run ~/Projects/myGreeter/lock/app.ts
+GDK_DEBUG=high-depth MY_LOCK_DEV=1 ags run ~/Projects/myGreeter/lock/app.ts
 ```
+
+`GDK_DEBUG=high-depth` asks GTK to render at more than 8 bits per channel. The
+scrim is a gradient spanning the whole screen; in 8 bits it crosses only about
+fifty levels, so each one covers a band some 40px wide with a dead-straight
+edge, and those edges read as a grid against the smooth blurred wallpaper. In
+production the flag is set for you — in `packaging/hypr/greeter.conf` for the
+login screen and in `packaging/my-lock` for the locker.
 
 Both use their own instance names (`my-greeter`, `my-lock`), so they run happily
 alongside the main shell. To stop one: `ags quit -i my-greeter`.

@@ -5,4 +5,9 @@
 # restarts or crashes, the lock has to stay on screen. Running it twice is
 # harmless — AGS sees the instance already running and exits.
 
+# Render at more than 8 bits per channel where the hardware allows it, so the
+# scrim gradient does not band into visible strips. See the same setting, with
+# the full reasoning, in packaging/hypr/greeter.conf.
+export GDK_DEBUG="${GDK_DEBUG:-high-depth}"
+
 exec ags run "${MY_GREETER_DIR:-$HOME/Projects/myGreeter}/lock/app.ts"

@@ -21,6 +21,13 @@ picture.screen-bg {
 // Dimming. Not a flat film but a gradient: the left edge, where the rail and the
 // column live, goes nearly black, while the picture stays readable on the right.
 // It also props up the asymmetry — the dark side is the text side.
+//
+// A gradient this wide is only smooth because the screens are started with
+// GDK_DEBUG=high-depth. In plain 8-bit rendering it crosses about fifty levels
+// across the whole width, so every level covers a band some 40px wide with a
+// dead-straight edge, and those edges read as a grid against the blurred
+// wallpaper. If the bands ever come back, check that the flag survived — see
+// packaging/hypr/greeter.conf and packaging/my-lock.
 screen-scrim {
   background: linear-gradient(
     to right,
