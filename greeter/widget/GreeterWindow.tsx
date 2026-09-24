@@ -99,6 +99,20 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
       layer={Astal.Layer.OVERLAY}
       application={app}
     >
+      {/* An escape hatch for debugging only. The window takes the keyboard
+          exclusively and covers the screen, so without this there is no way to
+          reach anything else and shut it down. A live greeter must never be
+          dismissible — there, Escape does nothing. */}
+      <Gtk.EventControllerKey
+        propagationPhase={Gtk.PropagationPhase.CAPTURE}
+        onKeyPressed={(_self, keyval) => {
+          if (GREETER_DEV && keyval === Gdk.KEY_Escape) {
+            app.quit()
+            return true
+          }
+          return false
+        }}
+      />
       <Screen
         wallpaper={wallpaper}
         content={primary}
