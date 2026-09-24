@@ -1,4 +1,5 @@
 import GLib from "gi://GLib"
+import { exec } from "ags/process"
 import { GREETER_DEV } from "./env"
 
 // ── Resource and state paths ──────────────────────────────────────────────────
@@ -39,17 +40,24 @@ export function greeterWallpaper(): string | null {
 }
 
 /**
- * The live session's wallpaper — what the locker shows. The path is written to
- * the cache by the update-wall script every time the picture changes.
+ * The live session's wallpaper — what the locker shows.
+ *
+ * Asked of the wallpaper daemon rather than read from a state file: awww knows
+ * what it is actually displaying, so there is nothing to fall out of sync. It
+ * answers with one line per output; we take the first, since the locker shows
+ * the same picture everywhere.
  */
 export function currentWallpaper(): string | null {
-  const state = `${GLib.get_user_cache_dir()}/current_wallpaper.txt`
-  if (!GLib.file_test(state, GLib.FileTest.EXISTS)) return null
+  let answer: string
+  try {
+    answer = exec(["awww", "query"])
+  } catch {
+    // No daemon, or no awww at all — the screen falls back to a flat background.
+    return null
+  }
 
-  const [ok, bytes] = GLib.file_get_contents(state)
-  if (!ok) return null
-
-  const path = new TextDecoder().decode(bytes).trim()
+  const match = answer.match(/currently displaying: image: (.+)$/m)
+  const path = match?.[1].trim()
   return path && GLib.file_test(path, GLib.FileTest.EXISTS) ? path : null
 }
 
