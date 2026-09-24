@@ -21,28 +21,14 @@ picture.screen-bg {
 // Dimming. Not a flat film but a gradient: the left edge, where the rail and the
 // column live, goes nearly black, while the picture stays readable on the right.
 // It also props up the asymmetry — the dark side is the text side.
-//
-// The first layer is dither. A gradient this wide crosses only ~50 eight-bit
-// levels over the whole screen, so each level covers a band some 40px across,
-// and those bands have dead-straight vertical edges — the eye reads them as a
-// grid, especially where the blurred wallpaper is smooth and adds no texture of
-// its own to hide them. A diagonal pattern of about one level breaks the bands
-// up into a 3px stipple. The amplitude is deliberately just under visible: at
-// 0.008 the weave itself starts to show in the dark half.
 screen-scrim {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 255, 255, 0.005) 0 2px,
-      rgba(255, 255, 255, 0) 2px 4px
-    ),
-    linear-gradient(
-      to right,
-      rgba(0, 0, 0, 0.82) 0%,
-      rgba(0, 0, 0, 0.72) 28%,
-      rgba(0, 0, 0, 0.40) 62%,
-      rgba(0, 0, 0, 0.22) 100%
-    );
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.72) 28%,
+    rgba(0, 0, 0, 0.40) 62%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
 }
 
 screen-body {
