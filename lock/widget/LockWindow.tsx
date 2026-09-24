@@ -3,6 +3,8 @@ import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState } from "gnim"
 import { authMessage, stubBackend, type AuthBackend } from "../../shared/services/auth"
 import { createPower } from "../../shared/services/power"
+import { createKeyboard } from "../../shared/services/keyboard"
+import { currentWallpaper } from "../../shared/services/paths"
 import { LOCK_DEV } from "../../shared/services/env"
 import Screen from "../../shared/widget/Screen"
 import Clock from "../../shared/widget/Clock"
@@ -18,12 +20,13 @@ import { UserLabel, type User } from "../../shared/widget/UserPicker"
 
 const backend: AuthBackend = stubBackend("заглушка блокировки")
 const power = createPower(!LOCK_DEV)
+const keyboard = createKeyboard()
+const wallpaper = currentWallpaper()
 
 /** Содержимое экрана: одинаково и для отладочного окна, и для session-lock. */
 export function LockContent(props: { user: User; onUnlock: () => void }) {
   const [busy, setBusy] = createState(false)
   const [error, setError] = createState("")
-  const [layout] = createState("en")
 
   async function submit(password: string) {
     setBusy(true)
@@ -40,8 +43,9 @@ export function LockContent(props: { user: User; onUnlock: () => void }) {
 
   return (
     <Screen
-      wallpaper={null}
-      layout={layout}
+      wallpaper={wallpaper}
+      layout={keyboard.layout}
+      onLayoutClicked={keyboard.next}
       onPoweroff={power.poweroff}
       onReboot={power.reboot}
     >

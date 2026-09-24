@@ -33,6 +33,7 @@ export default function Screen(props: ScreenProps) {
     <overlay>
       {props.wallpaper ? (
         <Gtk.Picture
+          class="screen-bg"
           file={Gio.File.new_for_path(props.wallpaper)}
           contentFit={Gtk.ContentFit.COVER}
           canShrink

@@ -1,6 +1,7 @@
 import app from "ags/gtk4/app"
 import style from "./style.scss"
-import { LOCK_DEV, USER } from "../shared/services/env"
+import { LOCK_DEV } from "../shared/services/env"
+import { currentUser } from "../shared/services/users"
 import LockWindow from "./widget/LockWindow"
 
 // Экран блокировки — отдельный процесс, а не часть шелла: если шелл упадёт или
@@ -12,7 +13,7 @@ app.start({
   instanceName: "my-lock",
   css: style,
   main() {
-    const user = { name: USER, label: USER }
+    const user = currentUser()
 
     if (!LOCK_DEV) {
       console.warn("боевой режим ещё не подключён, запускаюсь как отладочное окно")
