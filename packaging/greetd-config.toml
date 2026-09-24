@@ -1,0 +1,9 @@
+# Образец /etc/greetd/config.toml. Скопировать вручную — установщик системные
+# файлы не трогает.
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "Hyprland -c /usr/share/my-greeter/hyprland.conf"
+user = "greeter"

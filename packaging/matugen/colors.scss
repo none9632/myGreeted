@@ -1,0 +1,36 @@
+// ШАБЛОН MATUGEN — не редактировать результат, редактировать этот файл.
+//
+// Собирается в shared/style/colors.scss и в /usr/share/my-greeter/colors.scss.
+// Имена переменных совпадают один в один с тем, что ждут партиалы в
+// shared/style/, поэтому подключение matugen не требует правок в коде.
+//
+// Соответствие ролей Material You и токенов темы:
+//   surface           → фон панелей ($bg)
+//   surface_container → тёмная подложка ($bg-deep)
+//   surface_variant   → чипы ($surface)
+//   on_surface        → основной текст ($fg)
+//   outline           → вторичный текст ($subtext)
+//   primary           → акцент ($accent)
+//   on_primary        → текст поверх акцента ($accent-fg)
+//   secondary         → вторая точка акцентного градиента ($cyan)
+//
+// $cyan берётся именно из secondary, а не из оттенка primary: обе точки
+// градиента (штрих под датой, подчёркивание пароля, монограмма) должны
+// отличаться на глаз, иначе градиент выродится в заливку.
+
+$bg:        {{colors.surface.default.hex}};
+$bg-deep:   {{colors.surface_container_lowest.default.hex}};
+$surface:   {{colors.surface_variant.default.hex}};
+$fg:        {{colors.on_surface.default.hex}};
+$subtext:   {{colors.outline.default.hex}};
+$accent:    {{colors.primary.default.hex}};
+$accent-fg: {{colors.on_primary.default.hex}};
+
+$red:       {{colors.error.default.hex}};
+$cyan:      {{colors.secondary.default.hex}};
+
+// Ниже — остаток палитры doom-one. Сейчас экраны его не используют, но
+// переменные существуют, чтобы colors.scss оставался полной палитрой.
+$green:     {{colors.tertiary.default.hex}};
+$orange:    {{colors.secondary_fixed_dim.default.hex}};
+$purple:    {{colors.tertiary_fixed_dim.default.hex}};

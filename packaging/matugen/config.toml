@@ -1,0 +1,16 @@
+# Фрагмент конфига matugen для my-greeter. Дописать в ~/.config/matugen/config.toml
+# (или положить целиком, если своего конфига ещё нет) и запускать так:
+#
+#   matugen image /путь/к/обоям
+#
+# Шаблон пишет цвета в рабочую копию проекта, post-hook разносит цвета и обои
+# по /usr/share/my-greeter, куда greeter может дотянуться от пользователя
+# `greeter` — у него нет домашней папки, и ~ ему недоступен.
+
+[config]
+reload_apps = false
+
+[templates.my-greeter]
+input_path = "~/Projects/myGreeter/packaging/matugen/colors.scss"
+output_path = "~/Projects/myGreeter/shared/style/colors.scss"
+post_hook = "~/Projects/myGreeter/packaging/matugen/post-hook.sh {{image}}"

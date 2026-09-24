@@ -10,9 +10,7 @@ import { GREETER_DEV } from "./env"
 // В отладке всё то же самое переезжает в домашние каталоги, чтобы запуск из
 // живой сессии ничего не требовал и никуда не писал от root.
 
-export const RESOURCE_DIR = GREETER_DEV
-  ? `${SRC}/assets-dev`
-  : "/usr/share/my-greeter"
+export const RESOURCE_DIR = "/usr/share/my-greeter"
 
 export const CACHE_DIR = GREETER_DEV
   ? `${GLib.get_user_cache_dir()}/my-greeter`
@@ -29,7 +27,9 @@ export const SESSION_DIR = "/usr/share/wayland-sessions"
  * будет выглядеть после установки.
  */
 export function greeterWallpaper(): string | null {
-  if (GREETER_DEV) return currentWallpaper() ?? firstExisting([`${RESOURCE_DIR}/wallpaper`])
+  // В отладке экран запускается из живой сессии, поэтому показываем её обои —
+  // ровно те же, что окажутся в /usr/share/my-greeter после matugen.
+  if (GREETER_DEV) return currentWallpaper()
 
   return firstExisting([
     `${RESOURCE_DIR}/wallpaper`,

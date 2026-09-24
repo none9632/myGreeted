@@ -65,6 +65,11 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
       // greeter, и дописать что-либо мы уже не успеем.
       writeLastChoice({ user: user.get(), session: chosen.id })
       await auth.login(user.get(), password, chosen)
+
+      // greetd запускает сессию только после того, как greeter завершился.
+      // Выходим сами; дальше конфиг Hyprland доделывает `hyprctl dispatch exit`.
+      // В отладке остаёмся на экране — там выходить некуда и незачем.
+      if (!GREETER_DEV) app.quit()
     } catch (e) {
       setError(authMessage(e))
     } finally {
