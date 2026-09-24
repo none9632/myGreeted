@@ -57,8 +57,8 @@ install -m 0644 "$PROJECT/packaging/hypr/greeter.conf" "$TARGET/hyprland.conf"
 echo "→ preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
 
-# Wallpaper: if matugen has not run yet, take the current wallpaper of whoever is
-# installing.
+# Wallpaper: seed it from the current wallpaper of whoever is installing, unless
+# one is already in place. Replacing it later is a plain copy over the same path.
 if [[ ! -e "$TARGET/wallpaper" ]]; then
   REAL_USER="${SUDO_USER:-}"
   if [[ -n "$REAL_USER" ]]; then
@@ -97,9 +97,11 @@ Done. The rest is by hand — the installer does not touch system files:
      That takes effect after a reboot. You can check the screen earlier, without
      turning anything off, right inside the current session:
 
-       ags run ~/Projects/myGreeter/greeter/app.ts
+       GDK_DEBUG=high-depth ags run ~/Projects/myGreeter/greeter/app.ts
 
-  3. To make the login screen's colours and wallpaper follow matugen, append the
-     block from packaging/matugen/config.toml to ~/.config/matugen/config.toml.
+  3. The login screen's wallpaper is /usr/share/my-greeter/wallpaper, seeded
+     just now from your current session. To change it later:
+
+       sudo install -m 0644 /path/to/image /usr/share/my-greeter/wallpaper
 
 NEXT

@@ -22,12 +22,13 @@ export const SESSION_DIR = "/usr/share/wayland-sessions"
 /**
  * The login screen's wallpaper.
  *
- * In production this is the file matugen's post-hook drops next to the colours.
+ * In production this is a file the installer puts in place; replacing it is a
+ * plain copy over the same path.
  */
 export function greeterWallpaper(): string | null {
   // In debug the screen runs from a live session, so show that session's
-  // wallpaper — exactly the one that will end up in /usr/share/my-greeter after
-  // matugen runs.
+  // wallpaper — the same picture the installer copies into
+  // /usr/share/my-greeter.
   if (GREETER_DEV) return currentWallpaper()
 
   return firstExisting([

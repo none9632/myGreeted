@@ -2,9 +2,9 @@
 // The ONLY place colour lives. Everything else (opacity, gradients, shadows) is
 // assembled from these values in _tokens.scss.
 //
-// The file is deliberately flat — just `$name: #hex;` — so it can be regenerated
-// wholesale from the matugen template (packaging/matugen/colors.scss) without
-// touching any code. Hence no rgba(), no computation and no @use here.
+// The file is deliberately flat — just `$name: #hex;`, with no rgba(), no
+// computation and no @use — so the whole palette can be swapped in one place,
+// or written by a generator, without touching any code.
 //
 // Current values are the doom-one theme, the same one myBar, rofi and hyprlock
 // already use.

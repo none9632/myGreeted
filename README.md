@@ -39,13 +39,13 @@ shared/
   services/   env, paths, users, sessions, state, keyboard, power, auth
 greeter/      login screen: its own app.ts, style.scss and services/auth.ts (greetd)
 lock/         lock screen: its own app.ts, style.scss and services/auth.ts (PAM)
-packaging/    matugen, the Hyprland config for the greeter session, the installer
+packaging/    the installer, the Hyprland config for the greeter session, the lock launcher
 ```
 
 Colour lives **only** in `shared/style/colors.scss` — a flat list of
-`$name: #hex` that the matugen template regenerates wholesale. Everything else
-(opacity, gradients, shadows, animation curves) is assembled from it in
-`_tokens.scss`.
+`$name: #hex`, kept free of rgba() and computation so the whole palette can be
+swapped in one place. Everything else (opacity, gradients, shadows, animation
+curves) is assembled from it in `_tokens.scss`.
 
 ## Running inside the current session
 
@@ -102,19 +102,15 @@ Then replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
 hl.exec_cmd("swayidle -w before-sleep 'my-lock'")
 ```
 
-## Colours from matugen
+## Colours and wallpaper
 
-Right now `colors.scss` holds doom-one — the same palette myBar, rofi and
-hyprlock use. To make the colours follow the wallpaper, append the block from
-`packaging/matugen/config.toml` to `~/.config/matugen/config.toml` and run:
+`colors.scss` holds doom-one — the same palette myBar, rofi and hyprlock use.
+Edit that one file to restyle both screens.
 
-```bash
-matugen image /path/to/wallpaper
-```
-
-The template overwrites `shared/style/colors.scss`, and the post-hook copies both
-the colours and the wallpaper itself into `/usr/share/my-greeter/`, where the
-production greeter expects them.
+The login screen's wallpaper is `/usr/share/my-greeter/wallpaper`; the installer
+seeds it from the session it was run in, and changing it later is a copy over
+the same path. The lock screen does not use it — it reads the live session's
+wallpaper directly.
 
 ## Known small things
 
