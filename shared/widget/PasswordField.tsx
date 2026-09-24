@@ -22,6 +22,10 @@ export interface PasswordFieldProps {
 export default function PasswordField(props: PasswordFieldProps) {
   const [focused, setFocused] = createState(false)
   let entry: Gtk.Entry
+  // Set while we empty the field ourselves, so that programmatic change is not
+  // mistaken for the user typing — which would wipe the error we are about to
+  // show.
+  let clearing = false
 
   // Focus and error are two independent sources of classes on the same bar.
   const fill = createComputed(() =>
@@ -30,19 +34,29 @@ export default function PasswordField(props: PasswordFieldProps) {
 
   function submit() {
     if (props.busy.get()) return
-    const password = entry.get_text()
-    entry.set_text("")
-    props.onSubmit(password)
+    // The dots stay in place for the duration of the check — they only dim. The
+    // field is emptied once the answer is in, so that on failure the dots go and
+    // the message arrives in the same frame instead of leaving a blank pause.
+    props.onSubmit(entry.get_text())
   }
 
   onMount(() => {
     // Focus lands in the field at startup — no need to reach for the mouse.
     entry.grab_focus()
 
-    // And it comes back after every failed attempt: while a check runs the field
-    // goes insensitive, and loses focus along with it.
     props.busy.subscribe(() => {
-      if (!props.busy.get()) entry.grab_focus()
+      if (props.busy.get()) return
+
+      // The check is over. The parent has already set the error by now (catch
+      // runs before finally), so emptying the field here puts the cleared dots
+      // and the message on screen together.
+      clearing = true
+      entry.set_text("")
+      clearing = false
+
+      // Focus also has to be taken back: the field goes insensitive while the
+      // check runs and loses it along the way.
+      entry.grab_focus()
     })
   })
 
@@ -60,7 +74,9 @@ export default function PasswordField(props: PasswordFieldProps) {
         hexpand
         placeholderText={props.placeholder ?? "Password"}
         sensitive={props.busy.as((b) => !b)}
-        onNotifyText={() => props.onInput?.()}
+        onNotifyText={() => {
+          if (!clearing) props.onInput?.()
+        }}
         onActivate={submit}
       >
         {/* GtkEntry hands focus to an inner GtkText, so its own has-focus is

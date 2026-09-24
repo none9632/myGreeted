@@ -31,6 +31,9 @@ rail-button {
   rail-glyph {
     font-family: $font-glyph;
     font-size: $size-glyph-lg;
+    // Pulls the glyph back to the circle's true centre — see
+    // $glyph-optical-shift in _tokens.scss.
+    margin-right: $glyph-optical-shift;
   }
 
   &:hover {

@@ -32,7 +32,14 @@ export default function SessionPicker(props: {
         />
         <label cssName="session-arrow" label="▾" valign={Gtk.Align.CENTER} />
       </box>
-      <popover class="session-list" $={(self) => (popover = self as Gtk.Popover)}>
+      {/* hasArrow={false} drops the popover's tail. The theme draws that node
+          itself and leaves it white, which is the one bright thing on an
+          otherwise dark screen. */}
+      <popover
+        class="session-list"
+        hasArrow={false}
+        $={(self) => (popover = self as Gtk.Popover)}
+      >
         <box orientation={Gtk.Orientation.VERTICAL}>
           <For each={props.sessions}>
             {(session: Session) => (

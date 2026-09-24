@@ -51,6 +51,14 @@ $size-error:   14px;
 $size-glyph:   20px;
 $size-glyph-lg: 26px;
 
+// Nerd Font places its mark off-centre inside the glyph cell, so a centred glyph
+// sits visibly right of the box it is centred in — measured at +2.5 device px
+// for the rail icons. A trailing margin pushes it back, but not by half its own
+// size: GTK rounds the leftover space it splits, so the relation is lumpy. This
+// value was found by measuring (it lands within half a device pixel), not
+// derived. Re-measure if the font or the icons change.
+$glyph-optical-shift: 4px;
+
 // The accent rule under the date: a short, heavy line that sets the left edge of
 // the grid.
 $rule-width:  96px;
