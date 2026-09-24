@@ -47,6 +47,7 @@ function parse(path: string, id: string): Session | null {
       id,
       name: kf.get_locale_string(GROUP, "Name", null),
       exec: kf.get_string(GROUP, "Exec"),
+      desktopNames: optional(kf, "DesktopNames"),
     }
   } catch (e) {
     console.warn(`пропускаю ${path}:`, e)
@@ -54,12 +55,21 @@ function parse(path: string, id: string): Session | null {
   }
 }
 
-// Ключа Hidden в сессиях обычно нет вовсе, а g_key_file_has_key в gjs не
-// пробрасывается — поэтому просто пробуем прочитать и считаем отсутствие «нет».
+// g_key_file_has_key в gjs не пробрасывается, а Hidden и DesktopNames в
+// сессиях чаще отсутствуют, чем присутствуют. Поэтому просто пробуем прочитать
+// и считаем отсутствие ключа нормальным случаем, а не ошибкой.
 function hidden(kf: GLib.KeyFile): boolean {
   try {
     return kf.get_boolean(GROUP, "Hidden")
   } catch {
     return false
+  }
+}
+
+function optional(kf: GLib.KeyFile, key: string): string | undefined {
+  try {
+    return kf.get_string(GROUP, key) || undefined
+  } catch {
+    return undefined
   }
 }

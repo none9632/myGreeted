@@ -9,6 +9,7 @@ export interface Session {
   id: string // имя .desktop-файла без расширения
   name: string // Name= из .desktop
   exec: string // Exec=
+  desktopNames?: string // DesktopNames= → XDG_CURRENT_DESKTOP
 }
 
 export default function SessionPicker(props: {

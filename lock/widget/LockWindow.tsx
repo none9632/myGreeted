@@ -1,7 +1,8 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState } from "gnim"
-import { authMessage, stubBackend, type AuthBackend } from "../../shared/services/auth"
+import { authMessage } from "../../shared/services/auth"
+import { createLockAuth } from "../services/auth"
 import { createPower } from "../../shared/services/power"
 import { createKeyboard } from "../../shared/services/keyboard"
 import { currentWallpaper } from "../../shared/services/paths"
@@ -15,10 +16,11 @@ import { UserLabel, type User } from "../../shared/widget/UserPicker"
 // Та же композиция, что у входа, минус выбор пользователя и сессии: блокировщик
 // всегда возвращает в уже запущенную сессию текущего пользователя.
 //
-// ЭТАП «UI с заглушкой»: пароль проверяет та же заглушка (`test`). PAM и
-// настоящий ext-session-lock подключаются дальше.
+// Пароль всегда проверяет настоящий PAM — он ничего в системе не меняет, так
+// что заглушка здесь не нужна. Отладочным остаётся только само окно: боевой
+// ext-session-lock действительно заблокирует живую сессию.
 
-const backend: AuthBackend = stubBackend("заглушка блокировки")
+const auth = createLockAuth()
 const power = createPower(!LOCK_DEV)
 const keyboard = createKeyboard()
 const wallpaper = currentWallpaper()
@@ -32,7 +34,7 @@ export function LockContent(props: { user: User; onUnlock: () => void }) {
     setBusy(true)
     setError("")
     try {
-      await backend.authenticate(props.user.name, password)
+      await auth.authenticate(password)
       props.onUnlock()
     } catch (e) {
       setError(authMessage(e))

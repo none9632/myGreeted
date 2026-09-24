@@ -1,7 +1,8 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState } from "gnim"
-import { authMessage, stubBackend, type AuthBackend } from "../../shared/services/auth"
+import { authMessage } from "../../shared/services/auth"
+import { createGreeterAuth } from "../services/auth"
 import { createPower } from "../../shared/services/power"
 import { createKeyboard } from "../../shared/services/keyboard"
 import { GREETER_DEV } from "../../shared/services/env"
@@ -16,8 +17,9 @@ import UserPicker, { UserLabel, type User } from "../../shared/widget/UserPicker
 import SessionPicker from "../../shared/widget/SessionPicker"
 
 // ── Экран входа ───────────────────────────────────────────────────────────────
-// ЭТАП «данные»: списки читаются из системы, последний выбор запоминается.
-// Настоящий вход через AstalGreet подключается на следующем этапе.
+// Композиция «рельс»: управление в колонке у левого края, часы и ввод — в
+// колонке контента. Вся работа с greetd спрятана за createGreeterAuth(), так
+// что здесь остаётся только состояние экрана.
 
 // Всё это читается один раз на старте: в greeter'е система не меняется под
 // ногами, а перечитывать на каждый монитор незачем.
@@ -25,7 +27,7 @@ const USERS: User[] = listUsers()
 const SESSIONS: Session[] = listSessions()
 const LAST = readLastChoice()
 
-const backend: AuthBackend = stubBackend("заглушка входа")
+const auth = createGreeterAuth()
 const power = createPower(!GREETER_DEV)
 const keyboard = createKeyboard()
 const wallpaper = greeterWallpaper()
@@ -59,9 +61,10 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
     setBusy(true)
     setError("")
     try {
-      await backend.authenticate(user.get(), password)
+      // Выбор запоминаем до входа: после успешного start_session greetd гасит
+      // greeter, и дописать что-либо мы уже не успеем.
       writeLastChoice({ user: user.get(), session: chosen.id })
-      console.log(`вход разрешён: ${user.get()} → ${chosen.name}`)
+      await auth.login(user.get(), password, chosen)
     } catch (e) {
       setError(authMessage(e))
     } finally {
