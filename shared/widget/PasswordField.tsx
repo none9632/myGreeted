@@ -55,7 +55,7 @@ export default function PasswordField(props: PasswordFieldProps) {
     >
       <entry
         cssName="password-entry"
-        $={(self) => (entry = self)}
+        $={(self) => (entry = self as Gtk.Entry)}
         visibility={false}
         hexpand
         placeholderText={props.placeholder ?? "Пароль"}

@@ -8,8 +8,9 @@ import Rail, { type RailProps } from "./Rail"
 // Общая рама для обоих экранов: обои → затемнение → рельс → колонка контента.
 // Различается только содержимое колонки, которое приходит из greeter/ или lock/.
 
-// Длительность проявления; держать в паре с screen-body в shared/style/_base.scss.
-const ANIM_MS = 320
+// Задержка перед снятием стартового состояния — примерно один кадр. Сама
+// длительность перехода живёт в screen-body (shared/style/_base.scss).
+const FRAME_MS = 16
 
 export interface ScreenProps extends RailProps {
   /** Путь к обоям; null — остаётся сплошной тёмный фон. */
@@ -19,7 +20,7 @@ export interface ScreenProps extends RailProps {
    * просто затемнёнными обоями — управление живёт на основном.
    */
   content?: boolean
-  children: Gtk.Widget | Gtk.Widget[]
+  children: JSX.Element | JSX.Element[]
 }
 
 export default function Screen(props: ScreenProps) {
@@ -27,7 +28,7 @@ export default function Screen(props: ScreenProps) {
 
   // Проявляем на кадр позже карты окна, иначе GTK применит конечное состояние
   // сразу и перехода не будет видно.
-  onMount(() => timeout(ANIM_MS === 0 ? 0 : 16, () => setShown(true)))
+  onMount(() => timeout(FRAME_MS, () => setShown(true)))
 
   return (
     <overlay>

@@ -19,15 +19,10 @@ export default function SessionPicker(props: {
 }) {
   let popover: Gtk.Popover
 
+  // Стрелку рисуем сами (session-arrow); встроенную MenuButton без
+  // alwaysShowArrow и не показывает.
   return (
-    <menubutton
-      cssName="session-picker"
-      halign={Gtk.Align.START}
-      $={(self) => {
-        // Стрелку рисуем сами (session-arrow), встроенную убираем.
-        self.alwaysShowArrow = false
-      }}
-    >
+    <menubutton cssName="session-picker" halign={Gtk.Align.START}>
       <box>
         <label cssName="session-glyph" label="󰆍" valign={Gtk.Align.CENTER} />
         <label
@@ -37,7 +32,7 @@ export default function SessionPicker(props: {
         />
         <label cssName="session-arrow" label="▾" valign={Gtk.Align.CENTER} />
       </box>
-      <popover class="session-list" $={(self) => (popover = self)}>
+      <popover class="session-list" $={(self) => (popover = self as Gtk.Popover)}>
         <box orientation={Gtk.Orientation.VERTICAL}>
           <For each={props.sessions}>
             {(session: Session) => (
