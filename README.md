@@ -82,9 +82,23 @@ alongside the main shell. To stop one: `ags quit -i my-greeter`.
 
 The script lays the application out in `/usr/share/my-greeter/`, creates
 `/var/cache/my-greeter/` for the `greeter` user and installs a minimal Hyprland
-config. It does **not** touch system files or services — at the end it prints
-what is left to do by hand (write `/etc/greetd/config.toml`, switch `sddm` →
-`greetd`).
+config. None of that reaches outside those two directories.
+
+Then it asks two questions, each defaulting to no:
+
+1. **Write `/etc/greetd/config.toml`?** It prints the file first. An existing
+   config that differs is copied aside with a timestamp before being replaced.
+2. **Make greetd the login manager?** It names the one currently enabled and
+   shows the two `systemctl` lines it would run. The running session is not
+   touched; the switch takes effect on the next boot.
+
+Answering no to either is fine — whatever was skipped is printed at the end as a
+command to run by hand. Re-running the script is safe: steps already done are
+reported as such and nothing is rewritten. With no terminal on stdin (piped into
+a shell) both questions count as no.
+
+The wallpaper is left alone: it is seeded once from the session the installer ran
+in, and changing it later is a copy over `/usr/share/my-greeter/wallpaper`.
 
 Why it works that way: the greeter runs as the `greeter` user, who has no home
 directory. So in production no path leads into `~` — resources live in

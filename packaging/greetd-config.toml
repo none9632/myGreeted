@@ -1,5 +1,7 @@
-# A sample /etc/greetd/config.toml. Copy it by hand — the installer does not
-# touch system files.
+# greetd configuration for my-greeter.
+#
+# packaging/install.sh offers to place this file at /etc/greetd/config.toml; it
+# can just as well be copied there by hand.
 
 [terminal]
 vt = 1
