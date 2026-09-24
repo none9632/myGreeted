@@ -1,0 +1,29 @@
+@use "tokens" as *;
+
+// ── Часы, дата, акцентный штрих ───────────────────────────────────────────────
+// Верх колонки. Часы набраны крупно и тонко: на фоне обоев тонкое начертание
+// читается лучше жирного, а тень повторяет shadow_passes из hyprlock.
+
+clock-time {
+  font-size: $size-time;
+  font-weight: 200;
+  color: $fg;
+  text-shadow: $shadow-text;
+}
+
+clock-date {
+  font-size: $size-date;
+  font-weight: 300;
+  color: $subtext;
+  margin-top: -6px; // часы набраны с большим интерлиньяжем, подтягиваем дату
+}
+
+// Короткая жирная линия, задающая левый край всей сетки.
+accent-rule {
+  min-width: $rule-width;
+  min-height: $rule-height;
+  border-radius: calc(#{$rule-height} / 2);
+  background: linear-gradient(45deg, $accent, $cyan); // как outer_color в hyprlock
+  margin-top: 20px;
+  margin-bottom: 36px;
+}

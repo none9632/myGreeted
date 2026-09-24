@@ -1,0 +1,68 @@
+@use "tokens" as *;
+
+// ── Выбор сессии ──────────────────────────────────────────────────────────────
+// Плоская строка внизу колонки: глиф + имя сессии + стрелка. Существует только на
+// экране входа — блокировщик возвращает в уже запущенную сессию.
+
+session-picker {
+  margin-top: 32px;
+  padding: 6px 12px 6px 8px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  border-radius: $radius;
+  color: $subtext;
+  transition:
+    background $dur-fast ease,
+    color $dur-fast ease;
+
+  session-glyph {
+    font-family: $font-glyph;
+    font-size: $size-glyph;
+    margin-right: 10px;
+  }
+
+  session-name {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  session-arrow {
+    font-size: 11px;
+    margin-left: 8px;
+    opacity: 0.7;
+  }
+
+  &:hover {
+    background: rgba($surface, 0.5);
+    color: $fg;
+  }
+}
+
+// Выпадающий список сессий. Popover рисует свою тень сам, поэтому здесь только
+// фон и радиус — как у меню в myBar.
+popover.session-list {
+  > contents {
+    background: $bg;
+    border: none;
+    border-radius: $radius;
+    padding: 4px;
+  }
+
+  session-item {
+    padding: 8px 14px;
+    border-radius: $radius-sm;
+    color: $fg;
+    font-size: 15px;
+
+    &:hover {
+      background: $chip-bg;
+    }
+
+    &.selected {
+      background: rgba($accent, 0.18);
+      color: $accent;
+    }
+  }
+}

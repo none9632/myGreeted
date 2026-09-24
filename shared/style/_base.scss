@@ -1,0 +1,35 @@
+@use "tokens" as *;
+
+// ── Каркас экрана ─────────────────────────────────────────────────────────────
+// Оба экрана (вход и блокировка) рисуют одно и то же: обои → затемнение → рельс
+// слева → колонка контента. Разница только в наборе блоков внутри колонки.
+
+window.Greeter,
+window.Lock {
+  background: $bg-deep; // виден лишь если обои не загрузились
+  color: $fg;
+  font-family: $font;
+}
+
+// Затемняющий слой поверх обоев. Ориентир — hyprlock (brightness 0.6): картинка
+// должна уходить на задний план, но остаться узнаваемой.
+screen-scrim {
+  background: $scrim;
+}
+
+screen-body {
+  // Появление всего экрана: контент проявляется на кадр позже карты окна, класс
+  // .shown ставится из Screen.tsx. Длительность держать в паре с ANIM_MS там.
+  opacity: 0;
+  transition: opacity $dur-slow $ease-out;
+
+  &.shown {
+    opacity: 1;
+  }
+}
+
+screen-content {
+  min-width: $col-width;
+  margin-left: $content-inset;
+  margin-right: $content-inset;
+}

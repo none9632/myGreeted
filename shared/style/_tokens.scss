@@ -1,0 +1,58 @@
+@use "sass:color";
+@use "colors" as c;
+@forward "colors";
+
+// ── Токены дизайна ────────────────────────────────────────────────────────────
+// Сняты с работающей системы: myBar (styles/abstracts/_variables.scss), hyprlock.conf
+// и hyprland.lua. Менять стиль обоих экранов нужно здесь, а не в партиалах.
+
+// Шрифты: Inter — весь UI, Iosevka Nerd Font — глифы (тот же выбор, что в hyprlock).
+$font:       "Inter";
+$font-glyph: "Iosevka Nerd Font";
+
+// Скругления: 6px — окна Hyprland (decoration:rounding) и карточки myBar.
+$radius:      6px;
+$radius-sm:   4px;
+$radius-pill: 999px;
+
+// Сетка «рельса». Рельс — узкая колонка у левого края во всю высоту; контент
+// начинается с отступа $content-inset от неё, что и даёт асимметрию композиции.
+$rail-width:    88px;
+$rail-gap:      18px; // расстояние между кнопками внутри рельса
+$content-inset: 72px;
+
+// Прозрачность и подложки. 0.8 — та же альфа, что у всех панелей myBar; поверх
+// неё Hyprland кладёт свой блюр (layer-rule на gtk4-layer-shell).
+$rail-bg:  rgba(c.$bg, 0.72);
+$chip-bg:  rgba(c.$surface, 0.8);
+$chip-hover: rgba(c.$surface, 0.95);
+$scrim:    rgba(0, 0, 0, 0.42); // затемнение обоев, ориентир — brightness 0.6 в hyprlock
+
+// Тени: из decoration:shadow (offset 4 4, rgba(0000007a)) и карточек myBar.
+$shadow-rail: 4px 0 18px rgba(0, 0, 0, 0.42);
+$shadow-text: 0 2px 8px rgba(0, 0, 0, 0.48);
+
+// Движение. Кривые перенесены один в один из hl.curve() в hyprland.lua.
+$dur-fast:   120ms;
+$dur:        220ms;
+$dur-slow:   320ms;
+$ease-out:    cubic-bezier(0.23, 1, 0.32, 1);    // easeOutQuint
+$ease-macos:  cubic-bezier(0.25, 1, 0.5, 1);     // macos
+$ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); // overshoot, как ручка слайдера в myBar
+
+// Типографика. Часы — крупно и тонко, это главный якорь композиции.
+$size-time:    96px;
+$size-date:    22px;
+$size-name:    17px;
+$size-input:   20px;
+$size-error:   14px;
+$size-glyph:   20px;
+$size-glyph-lg: 26px;
+
+// Акцентный штрих под датой: короткая жирная линия, задающая левый край сетки.
+$rule-width:  96px;
+$rule-height: 3px;
+
+// Ширина колонки контента. Её же длину имеет линия под паролем — та наливается
+// акцентом от 0 до $col-width, поэтому значение должно быть фиксированным.
+$col-width: 420px;

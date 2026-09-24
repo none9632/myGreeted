@@ -1,0 +1,71 @@
+@use "tokens" as *;
+
+// ── Ряд пользователей ─────────────────────────────────────────────────────────
+// Аватарок в системе нет (/var/lib/AccountsService/icons пуст), поэтому вместо
+// фото — монограмма: диск с первой буквой имени. Активный диск заливается
+// акцентом, остальные остаются чипами.
+
+user-row {
+  margin-bottom: 28px;
+}
+
+user-chip {
+  padding: 6px 14px 6px 6px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  border-radius: $radius-pill;
+  color: $subtext;
+  transition:
+    background $dur-fast ease,
+    color $dur-fast ease;
+
+  &:hover {
+    background: rgba($surface, 0.5);
+    color: $fg;
+  }
+
+  &.selected {
+    color: $fg;
+  }
+}
+
+monogram {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: $radius-pill;
+  background: $chip-bg;
+  color: $subtext;
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+  transition:
+    background $dur $ease-spring,
+    color $dur-fast ease;
+
+  user-chip.selected & {
+    background: linear-gradient(45deg, $accent, $cyan);
+    color: $accent-fg;
+  }
+}
+
+user-name {
+  font-size: $size-name;
+  font-weight: 500;
+}
+
+// Одинокое имя — режим блокировки и вход с единственным пользователем: то же
+// оформление, но без кнопки и без ряда.
+user-single {
+  margin-bottom: 28px;
+
+  monogram {
+    background: linear-gradient(45deg, $accent, $cyan);
+    color: $accent-fg;
+  }
+
+  user-name {
+    color: $fg;
+  }
+}

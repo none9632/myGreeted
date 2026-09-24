@@ -1,0 +1,6 @@
+// Бандл стилей экрана блокировки: то же, что у входа, минус выбор сессии.
+@use "../shared/style/base";
+@use "../shared/style/rail";
+@use "../shared/style/clock";
+@use "../shared/style/users";
+@use "../shared/style/password";

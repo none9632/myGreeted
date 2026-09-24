@@ -1,0 +1,8 @@
+// Бандл стилей экрана входа. Партиалы общие, подключается только то, что экран
+// действительно рисует, — у блокировщика набор короче (нет выбора сессии).
+@use "../shared/style/base";
+@use "../shared/style/rail";
+@use "../shared/style/clock";
+@use "../shared/style/users";
+@use "../shared/style/password";
+@use "../shared/style/session";

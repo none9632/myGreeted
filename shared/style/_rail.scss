@@ -1,0 +1,67 @@
+@use "tokens" as *;
+
+// ── Рельс ─────────────────────────────────────────────────────────────────────
+// Узкая колонка во всю высоту у левого края: всё второстепенное (питание,
+// раскладка, сессия) вынесено сюда, чтобы колонка контента осталась чистой.
+// Полупрозрачная подложка + блюр Hyprland отделяют её от обоев.
+
+rail {
+  min-width: $rail-width;
+  background: $rail-bg;
+  box-shadow: $shadow-rail;
+  padding: 18px 0;
+}
+
+// Кнопка рельса: круг без рамки, глиф в $subtext, при наведении — чип и акцент.
+rail-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  border-radius: $radius-pill;
+  color: $subtext;
+  transition:
+    background $dur-fast ease,
+    color $dur-fast ease;
+
+  rail-glyph {
+    font-family: $font-glyph;
+    font-size: $size-glyph-lg;
+  }
+
+  &:hover {
+    background: $chip-bg;
+    color: $fg;
+  }
+
+  // Выключение — единственное действие, которое нельзя отменить: красная подсветка.
+  &.danger:hover {
+    color: $red;
+  }
+
+  &:active {
+    background: $chip-hover;
+  }
+}
+
+// Чип раскладки: тот же прямоугольный чип, что и в правой панели myBar.
+rail-chip {
+  min-width: 44px;
+  padding: 4px 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: $chip-bg;
+  border-radius: $radius-sm;
+  color: $fg;
+  font-size: 15px;
+  font-weight: bold;
+  transition: background $dur-fast ease;
+
+  &:hover {
+    background: $chip-hover;
+  }
+}
