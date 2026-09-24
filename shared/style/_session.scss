@@ -6,16 +6,27 @@
 
 session-picker {
   margin-top: 32px;
-  padding: 6px 12px 6px 8px;
-  border: none;
-  outline: none;
-  box-shadow: none;
-  background: transparent;
-  border-radius: $radius;
-  color: $subtext;
-  transition:
-    background $dur-fast ease,
-    color $dur-fast ease;
+
+  // MenuButton заворачивает содержимое в собственную GtkButton, и та приносит
+  // с собой всю фурнитуру темы (фон, рамку, тень). Сбрасываем её здесь, иначе
+  // строка читается как кнопка, а не как строка.
+  > button {
+    padding: 6px 12px 6px 8px;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    border-radius: $radius;
+    color: $subtext;
+    transition:
+      background $dur-fast ease,
+      color $dur-fast ease;
+
+    &:hover {
+      background: rgba($surface, 0.5);
+      color: $fg;
+    }
+  }
 
   session-glyph {
     font-family: $font-glyph;
@@ -34,10 +45,6 @@ session-picker {
     opacity: 0.7;
   }
 
-  &:hover {
-    background: rgba($surface, 0.5);
-    color: $fg;
-  }
 }
 
 // Выпадающий список сессий. Popover рисует свою тень сам, поэтому здесь только

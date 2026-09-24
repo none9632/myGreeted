@@ -14,6 +14,8 @@ export interface PasswordFieldProps {
   /** Текст ошибки; пустая строка прячет строку целиком. */
   error: Accessor<string>
   onSubmit: (password: string) => void
+  /** Пользователь начал править ввод — родитель гасит старую ошибку. */
+  onInput?: () => void
   placeholder?: string
 }
 
@@ -33,8 +35,16 @@ export default function PasswordField(props: PasswordFieldProps) {
     props.onSubmit(password)
   }
 
-  // Фокус в поле сразу при старте — вводить пароль можно не трогая мышь.
-  onMount(() => entry.grab_focus())
+  onMount(() => {
+    // Фокус в поле сразу при старте — вводить пароль можно не трогая мышь.
+    entry.grab_focus()
+
+    // И возвращаем его после каждой неудачной попытки: на время проверки поле
+    // становится нечувствительным, а вместе с этим теряет фокус.
+    props.busy.subscribe(() => {
+      if (!props.busy.get()) entry.grab_focus()
+    })
+  })
 
   return (
     <box
@@ -50,9 +60,16 @@ export default function PasswordField(props: PasswordFieldProps) {
         hexpand
         placeholderText={props.placeholder ?? "Пароль"}
         sensitive={props.busy.as((b) => !b)}
-        onNotifyHasFocus={(self) => setFocused(self.hasFocus)}
+        onNotifyText={() => props.onInput?.()}
         onActivate={submit}
-      />
+      >
+        {/* GtkEntry отдаёт фокус внутреннему GtkText, поэтому его собственное
+            has-focus всегда false — состояние приходится слушать контроллером. */}
+        <Gtk.EventControllerFocus
+          onEnter={() => setFocused(true)}
+          onLeave={() => setFocused(false)}
+        />
+      </entry>
       <box cssName="password-rule" halign={Gtk.Align.START}>
         <box cssName="password-rule-fill" halign={Gtk.Align.START} class={fill} />
       </box>

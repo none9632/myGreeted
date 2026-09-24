@@ -30,7 +30,7 @@ export default function Rail(props: RailProps) {
   return (
     <centerbox cssName="rail" orientation={Gtk.Orientation.VERTICAL}>
       <box $type="start" orientation={Gtk.Orientation.VERTICAL} spacing={8}>
-        <RailButton glyph="⏻" danger onClicked={props.onPoweroff} />
+        <RailButton glyph="󰐥" danger onClicked={props.onPoweroff} />
         <RailButton glyph="󰜉" onClicked={props.onReboot} />
       </box>
       <box $type="center" />

@@ -14,6 +14,11 @@ const ANIM_MS = 320
 export interface ScreenProps extends RailProps {
   /** Путь к обоям; null — остаётся сплошной тёмный фон. */
   wallpaper: string | null
+  /**
+   * Рисовать ли рельс и колонку. На дополнительных мониторах экран остаётся
+   * просто затемнёнными обоями — управление живёт на основном.
+   */
+  content?: boolean
   children: Gtk.Widget | Gtk.Widget[]
 }
 
@@ -41,21 +46,27 @@ export default function Screen(props: ScreenProps) {
         cssName="screen-body"
         class={shown.as((s) => (s ? "shown" : ""))}
       >
-        <Rail
-          layout={props.layout}
-          onLayoutClicked={props.onLayoutClicked}
-          onPoweroff={props.onPoweroff}
-          onReboot={props.onReboot}
-        />
-        <box
-          cssName="screen-content"
-          orientation={Gtk.Orientation.VERTICAL}
-          valign={Gtk.Align.CENTER}
-          halign={Gtk.Align.START}
-          hexpand
-        >
-          {props.children}
-        </box>
+        {props.content === false ? (
+          <box />
+        ) : (
+          <box>
+            <Rail
+              layout={props.layout}
+              onLayoutClicked={props.onLayoutClicked}
+              onPoweroff={props.onPoweroff}
+              onReboot={props.onReboot}
+            />
+            <box
+              cssName="screen-content"
+              orientation={Gtk.Orientation.VERTICAL}
+              valign={Gtk.Align.CENTER}
+              halign={Gtk.Align.START}
+              hexpand
+            >
+              {props.children}
+            </box>
+          </box>
+        )}
       </box>
     </overlay>
   )
