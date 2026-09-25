@@ -84,7 +84,7 @@ The script lays the application out in `/usr/share/my-greeter/`, creates
 `/var/cache/my-greeter/` for the `greeter` user and installs a minimal Hyprland
 config. None of that reaches outside those two directories.
 
-Then it asks four questions. The last three default to no:
+Then it asks five questions. The last four default to no:
 
 1. **Which directory do wallpapers come from?** Enter takes the default,
    `~/Pictures/wallpapers`; `-` skips wallpapers altogether. The answer is
@@ -98,11 +98,16 @@ Then it asks four questions. The last three default to no:
 4. **Make greetd the login manager?** It names the one currently enabled and
    shows the two `systemctl` lines it would run. The running session is not
    touched; the switch takes effect on the next boot.
+5. **Install the lock screen's launcher?** The one question that is not about
+   the login screen: it puts `packaging/my-lock` in your own `~/.local/bin/`.
+   Nothing else of the locker is installed — it runs out of the working copy, so
+   if this copy sits anywhere but `~/Projects/myGreeter` the path is written
+   into the launcher as it is copied.
 
-Answering no to either is fine — whatever was skipped is printed at the end as a
-command to run by hand. Re-running the script is safe: steps already done are
-reported as such and nothing is rewritten. With no terminal on stdin (piped into
-a shell) both questions count as no.
+Answering no to any of them is fine — whatever was skipped is printed at the end
+as a command to run by hand. Re-running the script is safe: steps already done
+are reported as such and nothing is rewritten. With no terminal on stdin (piped
+into a shell) every question counts as no.
 
 Nothing is copied out of the wallpaper directory except one fallback picture, so
 images added to it later show up at the login screen without reinstalling.
@@ -121,11 +126,16 @@ and the first is the file to read when the login screen does not come up.
 
 ## The lock screen
 
+`install.sh` offers to put the launcher in place; by hand it is one line:
+
 ```bash
 install -m 755 packaging/my-lock ~/.local/bin/my-lock
 ```
 
-Then replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
+Either way the locker itself stays in the working copy — the launcher only
+points at it, and `MY_GREETER_DIR` overrides where it looks.
+
+Nothing calls it yet. Replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
 
 ```lua
 hl.exec_cmd("swayidle -w before-sleep 'my-lock'")
