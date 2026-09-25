@@ -1,7 +1,9 @@
 import AstalGreet from "gi://AstalGreet"
+import GLib from "gi://GLib"
 import { AuthError, verifyStub } from "../../shared/services/auth"
 import { GREETER_DEV } from "../../shared/services/env"
 import type { Session } from "../../shared/services/sessions"
+import type { User } from "../../shared/widget/UserPicker"
 
 // ── Logging in through greetd ─────────────────────────────────────────────────
 // AstalGreet.login_with_env performs all three steps of the protocol at once:
@@ -13,54 +15,70 @@ import type { Session } from "../../shared/services/sessions"
 
 export interface GreeterAuth {
   /** Check the password and start the session. Throws AuthError. */
-  login(username: string, password: string, session: Session): Promise<void>
+  login(user: User, password: string, session: Session): Promise<void>
   /** A human-readable name for the mode — it goes into the log at startup. */
   readonly kind: string
 }
 
 /**
- * The session's environment variables. greetd passes them to the process as-is,
- * and from them the portals, XDG autostart and the applications themselves work
- * out where they have landed.
+ * The command handed to greetd.
+ *
+ * Not the session's Exec on its own: greetd runs it directly, with no shell in
+ * between, so none of the user's profile is read. That profile is where PATH
+ * picks up ~/.local/bin and where variables like ZDOTDIR are set, and without it
+ * a session comes up subtly broken — scripts missing from PATH, shells starting
+ * without their configuration.
+ *
+ * So the session is wrapped in the user's own login shell (`-l`), which reads
+ * the profile, and `exec` replaces the shell so no extra process is left behind.
+ * The XDG variables that describe the session go in front of it through `env`,
+ * since they cannot be passed alongside — see createGreeterAuth.
+ *
+ * AstalGreet splits this string with shell quoting rules, so the inner command
+ * survives as a single argument.
  */
-function sessionEnv(session: Session): string[] {
-  const env = [
-    "XDG_SESSION_TYPE=wayland",
-    `XDG_SESSION_DESKTOP=${session.id}`,
-  ]
-  if (session.desktopNames) env.push(`XDG_CURRENT_DESKTOP=${session.desktopNames}`)
-  return env
+function sessionCommand(user: User, session: Session): string {
+  const vars = ["XDG_SESSION_TYPE=wayland", `XDG_SESSION_DESKTOP=${session.id}`]
+  if (session.desktopNames) vars.push(`XDG_CURRENT_DESKTOP=${session.desktopNames}`)
+
+  const inner = `exec env ${vars.join(" ")} ${session.exec}`
+  const shell = user.shell || "/bin/sh"
+  return `${shell} -lc ${GLib.shell_quote(inner)}`
 }
 
 export function createGreeterAuth(): GreeterAuth {
   if (GREETER_DEV) {
     return {
       kind: "stub (GREETD_SOCK is not set)",
-      async login(username, password, session) {
+      async login(user, password, session) {
         await verifyStub(password)
-        console.log(`login accepted: ${username} → ${session.name}`)
+        console.log(`login accepted: ${user.name} → ${session.name}`)
+        console.log(`would run: ${sessionCommand(user, session)}`)
       },
     }
   }
 
   return {
     kind: "greetd",
-    async login(username, password, session) {
+    async login(user, password, session) {
       try {
+        // login(), not login_with_env(): the variant taking an environment
+        // array marshals it wrongly here — the array arrives at greetd empty,
+        // and with some inputs the process dies outright. Its GIR annotations
+        // are what mislead gjs, the same sloppiness that makes the callback
+        // mandatory below. The variables ride inside the command instead.
+        //
         // The callback is not optional, whatever the generated typings suggest:
         // gjs only turns a GIR async function into a promise when the function
-        // is annotated with its finish counterpart, and this one is not. Called
-        // with four arguments it fails outright with "At least 5 arguments
-        // required", so the promise is built by hand around the callback.
+        // is annotated with its finish counterpart, and this one is not.
         await new Promise<void>((resolve, reject) => {
-          AstalGreet.login_with_env(
-            username,
+          AstalGreet.login(
+            user.name,
             password,
-            session.exec,
-            sessionEnv(session),
+            sessionCommand(user, session),
             (_source, res) => {
               try {
-                AstalGreet.login_with_env_finish(res!)
+                AstalGreet.login_finish(res!)
                 resolve()
               } catch (e) {
                 reject(e)

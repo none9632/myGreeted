@@ -35,7 +35,7 @@ export function listUsers(): User[] {
 
     // GECOS is a five-comma field; only its first part is of any interest here.
     const full = (gecos ?? "").split(",")[0].trim()
-    users.push({ name, label: full || name })
+    users.push({ name, label: full || name, shell })
   }
 
   return users.sort((a, b) => a.label.localeCompare(b.label))
@@ -45,5 +45,9 @@ export function listUsers(): User[] {
 export function currentUser(): User {
   const name = GLib.get_user_name()
   const full = GLib.get_real_name()
-  return { name, label: full && full !== "Unknown" ? full : name }
+  return {
+    name,
+    label: full && full !== "Unknown" ? full : name,
+    shell: GLib.getenv("SHELL") ?? "/bin/sh",
+  }
 }

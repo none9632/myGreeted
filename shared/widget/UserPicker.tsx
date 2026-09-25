@@ -9,6 +9,7 @@ import Monogram from "./Monogram"
 export interface User {
   name: string // login
   label: string // full name from GECOS, or the login
+  shell: string // login shell from /etc/passwd
 }
 
 export function UserLabel({ user }: { user: User }) {

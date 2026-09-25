@@ -64,7 +64,10 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
       // Save the choice before logging in: once start_session succeeds greetd
       // puts the greeter out, and there is no time left to write anything.
       writeLastChoice({ user: user.get(), session: chosen.id })
-      await auth.login(user.get(), password, chosen)
+
+      const who = USERS.find((u) => u.name === user.get())
+      if (!who) throw new Error("no such user")
+      await auth.login(who, password, chosen)
 
       // greetd only starts the session once the greeter has exited. So exit;
       // `hyprctl dispatch exit` in the Hyprland config finishes the job. In debug
@@ -123,7 +126,7 @@ export default function GreeterWindow(gdkmonitor: Gdk.Monitor, primary: boolean)
       >
         <Clock />
         {single ? (
-          <UserLabel user={USERS[0] ?? { name: "", label: "?" }} />
+          <UserLabel user={USERS[0] ?? { name: "", label: "?", shell: "/bin/sh" }} />
         ) : (
           <UserPicker users={users} selected={user} onSelect={setUser} />
         )}
