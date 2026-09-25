@@ -1,5 +1,6 @@
 import app from "ags/gtk4/app"
 import { Gtk } from "ags/gtk4"
+import { timeout } from "ags/time"
 import Gdk from "gi://Gdk"
 import Gtk4SessionLock from "gi://Gtk4SessionLock"
 import style from "./style.scss"
@@ -57,8 +58,20 @@ function lockSession(user: User) {
   })
 
   // Unlocked — either by our password or from outside by the compositor. Either
-  // way the process has nothing left to do.
-  lock.connect("unlocked", () => app.quit())
+  // way the process has nothing left to do, but it must not go away here and
+  // now.
+  //
+  // The signal is emitted from inside unlock(), before the library has sent
+  // unlock_and_destroy to the compositor — and app.quit() never returns: AGS
+  // ends the process on the spot with System.exit. Quitting from this handler
+  // therefore kills the client while the compositor still holds the lock, and
+  // the only thing a compositor can read into that is a crashed locker. The
+  // screen stays locked and Hyprland puts up its "lockscreen app died" notice.
+  //
+  // One turn of the main loop later, unlock() has finished: it sends the
+  // request and waits out a Wayland roundtrip itself, so by then the lock is
+  // well and truly gone and there is nothing left to leave behind.
+  lock.connect("unlocked", () => timeout(0, () => app.quit()))
 
   if (!lock.lock()) {
     console.error("could not lock the session")
