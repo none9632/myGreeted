@@ -10,11 +10,14 @@
 -- in 0.57. Docs: https://wiki.hypr.land/Configuring/
 
 hl.monitor({
-    output   = "",
-    mode     = "preferred",
-    position = "auto",
-    scale    = "auto",
+    output   = "eDP-1",
+    mode     = "2520x1680@60",
+    position = "0x0",
+    scale    = 1.458333,
+    bitdepth = 10,
+    cm       = "wide",
 })
+
 
 hl.config({
     general = {
