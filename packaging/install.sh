@@ -37,7 +37,7 @@ if ! id "$GREETER_USER" >/dev/null 2>&1; then
   exit 1
 fi
 
-for dep in ags sass Hyprland; do
+for dep in ags sass Hyprland start-hyprland; do
   command -v "$dep" >/dev/null 2>&1 || {
     echo "error: $dep not found" >&2
     exit 1
@@ -153,6 +153,15 @@ if [[ -n "$COLLECTION" ]]; then
 else
   echo "→ no wallpaper directory; the screen falls back to $TARGET/wallpaper"
 fi
+
+# Stamp what was installed. The application is copied, not linked, so a change
+# in the working copy does not reach the login screen until this runs again —
+# and that is invisible without something to compare against.
+{
+  echo "installed: $(date -Is)"
+  echo "source:    $PROJECT"
+  git -C "$PROJECT" rev-parse --short HEAD 2>/dev/null | sed 's/^/commit:    /' || true
+} > "$TARGET/.installed"
 
 chmod -R a+rX "$TARGET"
 
