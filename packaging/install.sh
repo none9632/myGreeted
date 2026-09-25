@@ -115,8 +115,30 @@ done
 rm -f "$TARGET/wallpapers"
 
 if [[ -n "$COLLECTION" ]]; then
-  printf '\n# Where the login screen takes its wallpapers from. Written by install.sh.\nenv = WALLPAPER_DIR,%s\n' \
-    "$COLLECTION" >> "$TARGET/hyprland.conf"
+  # Placed next to the other env lines rather than appended at the end: the
+  # config is copied fresh on every run, so this is always an insert into a
+  # clean file, and grouping them keeps the question of ordering from arising
+  # at all.
+  awk -v dir="$COLLECTION" '
+    /^env = / { last = NR }
+    { lines[NR] = $0 }
+    END {
+      for (i = 1; i <= NR; i++) {
+        print lines[i]
+        if (i == last) {
+          print ""
+          print "# Where the login screen takes its wallpapers from. Written by install.sh."
+          print "env = WALLPAPER_DIR," dir
+        }
+      }
+      if (!last) {
+        print ""
+        print "# Where the login screen takes its wallpapers from. Written by install.sh."
+        print "env = WALLPAPER_DIR," dir
+      }
+    }
+  ' "$TARGET/hyprland.conf" > "$TARGET/hyprland.conf.new"
+  mv "$TARGET/hyprland.conf.new" "$TARGET/hyprland.conf"
   echo "→ wallpapers: $COLLECTION (recorded in $TARGET/hyprland.conf)"
 
   # One picture copied in as well, so a bare install still has something to show
