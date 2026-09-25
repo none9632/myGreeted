@@ -23,8 +23,9 @@ export interface GreeterAuth {
 /**
  * The command handed to greetd.
  *
- * Not the session's Exec on its own: greetd runs it directly, with no shell in
- * between, so none of the user's profile is read. That profile is where PATH
+ * Not the session's Exec on its own. greetd does put a shell in front of it and
+ * will source /etc/profile and ~/.profile first, but only those: a login shell's
+ * own files — ~/.bash_profile, ~/.zprofile — are never read. That profile is where PATH
  * picks up ~/.local/bin and where variables like ZDOTDIR are set, and without it
  * a session comes up subtly broken — scripts missing from PATH, shells starting
  * without their configuration.
@@ -43,7 +44,19 @@ function sessionCommand(user: User, session: Session): string {
 
   const inner = `exec env ${vars.join(" ")} ${session.exec}`
   const shell = user.shell || "/bin/sh"
-  return `${shell} -lc ${GLib.shell_quote(inner)}`
+  const line = `${shell} -lc ${GLib.shell_quote(inner)}`
+
+  // Quoted once more, so the whole line arrives as a single argument.
+  //
+  // greetd takes the argv it is given, joins it back into one command line and
+  // hands that to sh(1) — its manual says so outright. Anything spread across
+  // several elements therefore loses its quoting on the way: `bash -lc 'exec …'`
+  // comes out as `bash -lc exec`, which runs nothing, exits 0 and hands control
+  // straight back to greetd. That is an endless succession of login screens,
+  // each one looking like a rejected password.
+  //
+  // One element survives the round trip untouched.
+  return GLib.shell_quote(line)
 }
 
 export function createGreeterAuth(): GreeterAuth {
