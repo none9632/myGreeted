@@ -11,5 +11,18 @@ vt = 1
 # Hyprland expects, and without it the compositor puts a warning banner across
 # the top of the screen — on a login screen, the first thing anyone sees.
 # Everything after -- goes to Hyprland itself.
-command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.lua"
+#
+# The session's stdout and stderr are the VT itself, so everything Hyprland and
+# ags print scrolls across tty1 in the seconds between the boot messages and the
+# login screen. The redirection sends it to a file instead: the screen stays as
+# the boot left it until the compositor takes the display, and the output is
+# still there to read. Written with `>`, not `>>`, so the file holds the current
+# run rather than every boot since installation.
+#
+# greetd splits this line into words and joins it back before handing it to
+# sh(1) (its manual says the command line is run by a shell), so the redirection
+# survives — but only because none of it needs quoting. Anything quoted here
+# would lose its quotes on the way, see sessionCommand() in
+# greeter/services/auth.ts.
+command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.lua >/var/cache/my-greeter/session.log 2>&1"
 user = "greeter"

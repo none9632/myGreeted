@@ -21,6 +21,28 @@ export interface GreeterAuth {
 }
 
 /**
+ * Where the session's output goes instead of the screen.
+ *
+ * greetd hands the session the VT as its stdin, stdout and stderr, so
+ * everything the compositor prints before it takes over the display scrolls
+ * across tty1 — the second time in one boot, right after the password is
+ * accepted and the login screen disappears. Hyprland keeps its own full log in
+ * $XDG_RUNTIME_DIR/hypr/<instance>/hyprland.log, so nothing is really lost;
+ * this file catches the early lines that precede it, and the output of whatever
+ * the session starts afterwards.
+ *
+ * The path is expanded by the shell that runs the session, not by us —
+ * XDG_RUNTIME_DIR is set by pam_systemd when greetd opens the session, and both
+ * it and the fallback are directories that always exist. A redirection into a
+ * missing directory would make the shell exit before the session ever starts,
+ * which greetd would show as an instant return to the login screen.
+ *
+ * Runtime dir, not the home directory: the log belongs to this boot and goes
+ * away with the session, like Hyprland's own.
+ */
+const SESSION_LOG = '"${XDG_RUNTIME_DIR:-/tmp}/my-greeter-session.log"'
+
+/**
  * The command handed to greetd.
  *
  * Not the session's Exec on its own. greetd does put a shell in front of it and
@@ -42,7 +64,7 @@ function sessionCommand(user: User, session: Session): string {
   const vars = ["XDG_SESSION_TYPE=wayland", `XDG_SESSION_DESKTOP=${session.id}`]
   if (session.desktopNames) vars.push(`XDG_CURRENT_DESKTOP=${session.desktopNames}`)
 
-  const inner = `exec env ${vars.join(" ")} ${session.exec}`
+  const inner = `exec env ${vars.join(" ")} ${session.exec} >${SESSION_LOG} 2>&1`
   const shell = user.shell || "/bin/sh"
   const line = `${shell} -lc ${GLib.shell_quote(inner)}`
 

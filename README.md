@@ -111,6 +111,14 @@ Why it works that way: the greeter runs as the `greeter` user, who has no home
 directory. So in production no path leads into `~` — resources live in
 `/usr/share/my-greeter/` and mutable state in `/var/cache/my-greeter/`.
 
+The output of anything greetd starts lands on tty1, and scrolls past twice in a
+boot: once between the boot messages and the login screen, once more after the
+password is accepted. Both are redirected to a file instead — the greeter's own
+output by `/etc/greetd/config.toml` to `/var/cache/my-greeter/session.log`, and
+the session's by `sessionCommand()` in `greeter/services/auth.ts` to
+`$XDG_RUNTIME_DIR/my-greeter-session.log`. Both are rewritten at every start,
+and the first is the file to read when the login screen does not come up.
+
 ## The lock screen
 
 ```bash
