@@ -71,11 +71,28 @@ export function chooseGreeterWallpaper(): string | null {
 
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i
 
+/**
+ * Follow the pool when it is a symlink — in production it is one, pointing at
+ * the real collection. Composing paths through the link would work, but the
+ * session would then be handed a path that does not match its own collection,
+ * and update-wall compares full paths to avoid repeating the current picture.
+ */
+function resolveDir(dir: string): string {
+  try {
+    const target = GLib.file_read_link(dir)
+    return GLib.path_is_absolute(target) ? target : dir
+  } catch {
+    return dir // not a symlink, which is the normal case in debug
+  }
+}
+
 /** One random image out of a directory, or null if there are none to be had. */
 function randomFrom(dir: string): string | null {
+  const real = resolveDir(dir)
+
   let entries: Gio.FileEnumerator
   try {
-    entries = Gio.File.new_for_path(dir).enumerate_children(
+    entries = Gio.File.new_for_path(real).enumerate_children(
       "standard::name",
       Gio.FileQueryInfoFlags.NONE,
       null,
@@ -89,7 +106,7 @@ function randomFrom(dir: string): string | null {
   let info: Gio.FileInfo | null
   while ((info = entries.next_file(null)) !== null) {
     const name = info.get_name()
-    if (IMAGE.test(name)) images.push(`${dir}/${name}`)
+    if (IMAGE.test(name)) images.push(`${real}/${name}`)
   }
 
   if (images.length === 0) return null
