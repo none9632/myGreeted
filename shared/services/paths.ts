@@ -22,12 +22,16 @@ export const CACHE_DIR = GREETER_DEV
 export const SESSION_DIR = "/usr/share/wayland-sessions"
 
 /**
- * The pool the login screen picks its wallpaper from.
+ * The directory the login screen picks its wallpaper from.
  *
- * In production this is a symlink the installer points at the collection; the
- * `greeter` user reaches it through an ACL on the home directory, since a
- * symlink alone would still be stopped by the permissions on the way. In debug
- * it is the same default update-wall uses, and the same variable overrides both.
+ * In production the installer asks for it and writes the answer into the
+ * greeter session's Hyprland config as `env = WALLPAPER_DIR,…`, so the path is
+ * visible in the config rather than hidden in the code. The `greeter` user
+ * reaches it through an ACL granting search along the way — a directory inside
+ * a home is closed to it otherwise.
+ *
+ * In debug it falls back to the same default update-wall uses, and the same
+ * variable overrides both.
  */
 export const WALLPAPER_DIR =
   GLib.getenv("WALLPAPER_DIR") ??
@@ -72,10 +76,10 @@ export function chooseGreeterWallpaper(): string | null {
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i
 
 /**
- * Follow the pool when it is a symlink — in production it is one, pointing at
- * the real collection. Composing paths through the link would work, but the
- * session would then be handed a path that does not match its own collection,
- * and update-wall compares full paths to avoid repeating the current picture.
+ * Follow the directory when it is a symlink. Composing paths through a link
+ * would work, but the session would then be handed a path that does not match
+ * its own collection, and update-wall compares full paths to avoid repeating
+ * the picture already on screen.
  */
 function resolveDir(dir: string): string {
   try {

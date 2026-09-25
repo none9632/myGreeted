@@ -18,6 +18,11 @@
 set -euo pipefail
 
 PROJECT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REAL_USER="${SUDO_USER:-}"
+REAL_HOME=""
+if [[ -n "$REAL_USER" ]]; then
+  REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
+fi
 TARGET=/usr/share/my-greeter
 CACHE=/var/cache/my-greeter
 GREETER_USER=greeter
@@ -49,6 +54,21 @@ ask() {
   [[ "$reply" == [Yy] || "$reply" == [Yy][Ee][Ss] ]]
 }
 
+# Read a path, offering a default. Same rule as ask(): with no terminal the
+# default stands, so an unattended run still gets something sensible.
+ask_path() {
+  local prompt="$1" default="$2" reply=""
+  if [[ ! -t 0 ]]; then
+    printf '%s' "$default"
+    return
+  fi
+  read -r -p "$prompt [$default] " reply || reply=""
+  reply="${reply:-$default}"
+  # read does not expand a leading ~, and typing one is the natural thing to do.
+  [[ "$reply" == "~/"* ]] && reply="${REAL_HOME}/${reply#\~/}"
+  printf '%s' "$reply"
+}
+
 echo "→ installing the application into $TARGET"
 install -d -m 0755 "$TARGET"
 for dir in shared greeter; do
@@ -70,26 +90,37 @@ echo "→ preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
 
 # ── Wallpapers ────────────────────────────────────────────────────────────────
-# The login screen picks a fresh picture from a pool on every boot. The pool is
-# not copied: $TARGET/wallpapers is a symlink to the collection, so pictures
-# added later show up at the login screen without reinstalling.
-#
-# A symlink grants no access of its own, though — the greeter user still has to
-# be able to walk the path. That is the question further down.
+# The login screen picks a fresh picture from a directory on every boot. The
+# directory is not copied and not linked: its path is written into the installed
+# Hyprland config as WALLPAPER_DIR, so it is visible in the config rather than
+# hidden behind a symlink, and pictures added later show up without reinstalling.
 
-REAL_USER="${SUDO_USER:-}"
-REAL_HOME=""
-if [[ -n "$REAL_USER" ]]; then
-  REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
-fi
-COLLECTION="${WALLPAPER_DIR:-${REAL_HOME:+$REAL_HOME/Pictures/wallpapers}}"
+COLLECTION=""
+echo
+echo "The login screen picks a random wallpaper from a directory on every boot."
+# Enter takes the default, so skipping needs a token of its own — an empty line
+# cannot mean both "the default" and "none at all".
+for _ in 1 2 3; do
+  answer="$(ask_path "Wallpaper directory, or - for none" "$REAL_HOME/Pictures/wallpapers")"
+  if [[ "$answer" == "-" ]]; then
+    break
+  elif [[ -d "$answer" ]]; then
+    COLLECTION="$answer"
+    break
+  fi
+  echo "no such directory: $answer"
+done
 
-if [[ -n "$COLLECTION" && -d "$COLLECTION" ]]; then
-  ln -sfn "$COLLECTION" "$TARGET/wallpapers"
-  echo "→ wallpaper pool: $TARGET/wallpapers → $COLLECTION"
+# A stale symlink from an older install would quietly win over the variable.
+rm -f "$TARGET/wallpapers"
+
+if [[ -n "$COLLECTION" ]]; then
+  printf '\n# Where the login screen takes its wallpapers from. Written by install.sh.\nenv = WALLPAPER_DIR,%s\n' \
+    "$COLLECTION" >> "$TARGET/hyprland.conf"
+  echo "→ wallpapers: $COLLECTION (recorded in $TARGET/hyprland.conf)"
 
   # One picture copied in as well, so a bare install still has something to show
-  # if the pool turns out to be unreachable.
+  # if the directory turns out to be unreachable.
   if [[ ! -e "$TARGET/wallpaper" ]]; then
     fallback="$(find "$COLLECTION" -type f -iregex '.*\.\(jpe?g\|png\|webp\)$' | shuf -n 1 || true)"
     if [[ -n "$fallback" ]]; then
@@ -98,7 +129,7 @@ if [[ -n "$COLLECTION" && -d "$COLLECTION" ]]; then
     fi
   fi
 else
-  echo "→ no wallpaper collection found; the screen falls back to $TARGET/wallpaper"
+  echo "→ no wallpaper directory; the screen falls back to $TARGET/wallpaper"
 fi
 
 chmod -R a+rX "$TARGET"
@@ -265,7 +296,7 @@ if [[ "$config_ok" == no || "$switched" == no || "$acl_ok" == no ]]; then
   echo
 fi
 
-if [[ "$acl_needed" == no && -L "$TARGET/wallpapers" ]]; then
+if [[ "$acl_needed" == no && -n "$COLLECTION" ]]; then
   echo "Wallpapers come from $COLLECTION, one at random on every boot."
   echo
 fi

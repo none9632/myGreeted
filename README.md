@@ -84,15 +84,18 @@ The script lays the application out in `/usr/share/my-greeter/`, creates
 `/var/cache/my-greeter/` for the `greeter` user and installs a minimal Hyprland
 config. None of that reaches outside those two directories.
 
-Then it asks three questions, each defaulting to no:
+Then it asks four questions. The last three default to no:
 
-1. **Let `greeter` reach the wallpaper collection?** Home directories are `0700`,
-   which stops the greeter at the first component of the path. It names the
-   directories that actually block the way and grants search on those with an
-   ACL — narrower than `chmod 0711`, which would open the way for everyone.
-2. **Write `/etc/greetd/config.toml`?** It prints the file first. An existing
+1. **Which directory do wallpapers come from?** Enter takes the default,
+   `~/Pictures/wallpapers`; `-` skips wallpapers altogether. The answer is
+   written into the installed Hyprland config as `env = WALLPAPER_DIR,…`.
+2. **Let `greeter` reach it?** Home directories are `0700`, which stops the
+   greeter at the first component of the path. It names the directories that
+   actually block the way and grants search on those with an ACL — narrower
+   than `chmod 0711`, which would open the way for everyone.
+3. **Write `/etc/greetd/config.toml`?** It prints the file first. An existing
    config that differs is copied aside with a timestamp before being replaced.
-3. **Make greetd the login manager?** It names the one currently enabled and
+4. **Make greetd the login manager?** It names the one currently enabled and
    shows the two `systemctl` lines it would run. The running session is not
    touched; the switch takes effect on the next boot.
 
@@ -101,8 +104,8 @@ command to run by hand. Re-running the script is safe: steps already done are
 reported as such and nothing is rewritten. With no terminal on stdin (piped into
 a shell) both questions count as no.
 
-`/usr/share/my-greeter/wallpapers` is left as a symlink to the collection, not a
-copy, so pictures added later show up at the login screen without reinstalling.
+Nothing is copied out of the wallpaper directory except one fallback picture, so
+images added to it later show up at the login screen without reinstalling.
 
 Why it works that way: the greeter runs as the `greeter` user, who has no home
 directory. So in production no path leads into `~` — resources live in
@@ -127,11 +130,11 @@ Edit that one file to restyle both screens.
 
 ## Wallpaper
 
-The login screen picks one at random from `/usr/share/my-greeter/wallpapers` on
-every boot — a symlink to the collection, so the pool is whatever is in there.
-`WALLPAPER_DIR` overrides the directory, the same variable `update-wall` uses.
-If the pool is unreachable it falls back to the single file
-`/usr/share/my-greeter/wallpaper`, which the installer seeds.
+The login screen picks one at random on every boot from `WALLPAPER_DIR` — the
+same variable `update-wall` reads, set for the greeter session by the installer
+in `/usr/share/my-greeter/hyprland.conf`. If that directory is missing or
+unreachable it falls back to the single file `/usr/share/my-greeter/wallpaper`,
+which the installer seeds.
 
 The picture it chose is written to `/var/cache/my-greeter/wallpaper`, and the
 session adopts it on login so nothing changes under you at the moment you log
