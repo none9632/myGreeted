@@ -5,9 +5,6 @@
 --
 -- My main config (~/.config/hypr/hyprland.lua) has nothing to do with this: the
 -- greeter runs as the `greeter` user, who has no access to ~.
---
--- Written in Lua rather than hyprlang: 0.56 warns that the old format goes away
--- in 0.57. Docs: https://wiki.hypr.land/Configuring/
 
 hl.monitor({
     output   = "eDP-1",
