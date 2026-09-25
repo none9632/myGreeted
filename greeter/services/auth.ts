@@ -47,12 +47,27 @@ export function createGreeterAuth(): GreeterAuth {
     kind: "greetd",
     async login(username, password, session) {
       try {
-        await AstalGreet.login_with_env(
-          username,
-          password,
-          session.exec,
-          sessionEnv(session),
-        )
+        // The callback is not optional, whatever the generated typings suggest:
+        // gjs only turns a GIR async function into a promise when the function
+        // is annotated with its finish counterpart, and this one is not. Called
+        // with four arguments it fails outright with "At least 5 arguments
+        // required", so the promise is built by hand around the callback.
+        await new Promise<void>((resolve, reject) => {
+          AstalGreet.login_with_env(
+            username,
+            password,
+            session.exec,
+            sessionEnv(session),
+            (_source, res) => {
+              try {
+                AstalGreet.login_with_env_finish(res!)
+                resolve()
+              } catch (e) {
+                reject(e)
+              }
+            },
+          )
+        })
       } catch (e) {
         throw new AuthError(greetdMessage(e))
       }
@@ -71,5 +86,13 @@ function greetdMessage(error: unknown): string {
   if (/auth/i.test(raw) && /fail|incorrect|invalid/i.test(raw)) return "Wrong password"
   if (/no such user|unknown user/i.test(raw)) return "No such user"
   if (/permission denied/i.test(raw)) return "Login not permitted"
-  return raw || "Could not log in"
+
+  // Neither of these is about the person typing: they mean the screen is not
+  // talking to greetd at all.
+  if (/socket not found/i.test(raw)) return "greetd is not running"
+  if (/could not connect/i.test(raw)) return "Cannot reach greetd"
+
+  // Anything else is shown as it came, minus the GError type name in front of
+  // it — that prefix tells a person nothing, and the rest might.
+  return raw.replace(/^[\w.]+:\s*/, "") || "Could not log in"
 }
