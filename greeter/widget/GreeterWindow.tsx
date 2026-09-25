@@ -6,7 +6,7 @@ import { createGreeterAuth } from "../services/auth"
 import { createPower } from "../../shared/services/power"
 import { createKeyboard } from "../../shared/services/keyboard"
 import { GREETER_DEV } from "../../shared/services/env"
-import { greeterWallpaper } from "../../shared/services/paths"
+import { chooseGreeterWallpaper } from "../../shared/services/paths"
 import { listSessions, type Session } from "../../shared/services/sessions"
 import { listUsers } from "../../shared/services/users"
 import { readLastChoice, writeLastChoice } from "../../shared/services/state"
@@ -30,7 +30,7 @@ const LAST = readLastChoice()
 const auth = createGreeterAuth()
 const power = createPower(!GREETER_DEV)
 const keyboard = createKeyboard()
-const wallpaper = greeterWallpaper()
+const wallpaper = chooseGreeterWallpaper()
 
 /** Last time's choice, if it still exists; otherwise the first in the list. */
 function initialUser(): string {

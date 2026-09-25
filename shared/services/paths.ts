@@ -1,4 +1,5 @@
 import GLib from "gi://GLib"
+import Gio from "gi://Gio"
 import { exec } from "ags/process"
 import { GREETER_DEV } from "./env"
 
@@ -21,22 +22,78 @@ export const CACHE_DIR = GREETER_DEV
 export const SESSION_DIR = "/usr/share/wayland-sessions"
 
 /**
- * The login screen's wallpaper.
+ * The pool the login screen picks its wallpaper from.
  *
- * In production this is a file the installer puts in place; replacing it is a
- * plain copy over the same path.
+ * In production this is a symlink the installer points at the collection; the
+ * `greeter` user reaches it through an ACL on the home directory, since a
+ * symlink alone would still be stopped by the permissions on the way. In debug
+ * it is the same default update-wall uses, and the same variable overrides both.
  */
-export function greeterWallpaper(): string | null {
-  // In debug the screen runs from a live session, so show that session's
-  // wallpaper — the same picture the installer copies into
-  // /usr/share/my-greeter.
-  if (GREETER_DEV) return currentWallpaper()
+export const WALLPAPER_DIR =
+  GLib.getenv("WALLPAPER_DIR") ??
+  (GREETER_DEV ? `${GLib.get_home_dir()}/Pictures/wallpapers` : `${RESOURCE_DIR}/wallpapers`)
 
-  return firstExisting([
+/** Where the login screen leaves the picture it chose, for the session to adopt. */
+export const CHOSEN_WALLPAPER = `${CACHE_DIR}/wallpaper`
+
+/**
+ * Pick the login screen's wallpaper and record the choice.
+ *
+ * A fresh picture every boot, drawn at random from WALLPAPER_DIR — the same
+ * thing update-wall does for the session, minus the daemon: the greeter paints
+ * its own background, so nothing needs to be handed to a wallpaper daemon.
+ *
+ * The chosen path is written to CHOSEN_WALLPAPER so the session can adopt it on
+ * login and the picture does not jump. Writing is best-effort: a wallpaper is
+ * not worth failing a login over.
+ *
+ * Falls back to the single /usr/share/my-greeter/wallpaper file when the pool is
+ * missing or empty, which is what a bare install without the collection gets.
+ */
+export function chooseGreeterWallpaper(): string | null {
+  const chosen = randomFrom(WALLPAPER_DIR) ?? firstExisting([
     `${RESOURCE_DIR}/wallpaper`,
     `${RESOURCE_DIR}/wallpaper.jpg`,
     `${RESOURCE_DIR}/wallpaper.png`,
   ])
+
+  if (chosen) {
+    try {
+      GLib.mkdir_with_parents(CACHE_DIR, 0o755)
+      GLib.file_set_contents(CHOSEN_WALLPAPER, new TextEncoder().encode(`${chosen}\n`))
+    } catch (e) {
+      console.warn("could not record the chosen wallpaper:", e)
+    }
+  }
+
+  return chosen
+}
+
+const IMAGE = /\.(jpe?g|png|webp|gif)$/i
+
+/** One random image out of a directory, or null if there are none to be had. */
+function randomFrom(dir: string): string | null {
+  let entries: Gio.FileEnumerator
+  try {
+    entries = Gio.File.new_for_path(dir).enumerate_children(
+      "standard::name",
+      Gio.FileQueryInfoFlags.NONE,
+      null,
+    )
+  } catch {
+    // No pool installed, or no way through to it — the caller falls back.
+    return null
+  }
+
+  const images: string[] = []
+  let info: Gio.FileInfo | null
+  while ((info = entries.next_file(null)) !== null) {
+    const name = info.get_name()
+    if (IMAGE.test(name)) images.push(`${dir}/${name}`)
+  }
+
+  if (images.length === 0) return null
+  return images[Math.floor(Math.random() * images.length)]
 }
 
 /**

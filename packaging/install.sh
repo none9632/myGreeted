@@ -7,9 +7,10 @@
 #   /var/cache/my-greeter/   — the last selected user and session
 #   /usr/share/my-greeter/hyprland.conf — the minimal compositor for logging in
 #
-# Laying those out touches nothing else. Pointing greetd at the greeter and
-# making it the login manager do touch /etc and systemd, so those two come last,
-# each behind its own question, and neither happens without a clear yes.
+# Laying those out touches nothing else. Reaching the wallpaper collection,
+# pointing greetd at the greeter and making it the login manager do touch things
+# outside, so those three come last, each behind its own question, and none of
+# them happens without a clear yes.
 #
 # The lock screen is not involved here — it runs as the live user straight out of
 # the working copy.
@@ -68,22 +69,100 @@ install -m 0644 "$PROJECT/packaging/hypr/greeter.conf" "$TARGET/hyprland.conf"
 echo "→ preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
 
-# Wallpaper: seed it from the current wallpaper of whoever is installing, unless
-# one is already in place. Replacing it later is a plain copy over the same path.
-if [[ ! -e "$TARGET/wallpaper" ]]; then
-  REAL_USER="${SUDO_USER:-}"
-  if [[ -n "$REAL_USER" ]]; then
-    REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
-    STATE="$REAL_HOME/.cache/current_wallpaper.txt"
-    if [[ -f "$STATE" ]]; then
-      WALL="$(cat "$STATE")"
-      [[ -f "$WALL" ]] && install -m 0644 "$WALL" "$TARGET/wallpaper" &&
-        echo "→ wallpaper taken from the current session: $WALL"
+# ── Wallpapers ────────────────────────────────────────────────────────────────
+# The login screen picks a fresh picture from a pool on every boot. The pool is
+# not copied: $TARGET/wallpapers is a symlink to the collection, so pictures
+# added later show up at the login screen without reinstalling.
+#
+# A symlink grants no access of its own, though — the greeter user still has to
+# be able to walk the path. That is the question further down.
+
+REAL_USER="${SUDO_USER:-}"
+REAL_HOME=""
+if [[ -n "$REAL_USER" ]]; then
+  REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
+fi
+COLLECTION="${WALLPAPER_DIR:-${REAL_HOME:+$REAL_HOME/Pictures/wallpapers}}"
+
+if [[ -n "$COLLECTION" && -d "$COLLECTION" ]]; then
+  ln -sfn "$COLLECTION" "$TARGET/wallpapers"
+  echo "→ wallpaper pool: $TARGET/wallpapers → $COLLECTION"
+
+  # One picture copied in as well, so a bare install still has something to show
+  # if the pool turns out to be unreachable.
+  if [[ ! -e "$TARGET/wallpaper" ]]; then
+    fallback="$(find "$COLLECTION" -type f -iregex '.*\.\(jpe?g\|png\|webp\)$' | shuf -n 1 || true)"
+    if [[ -n "$fallback" ]]; then
+      install -m 0644 "$fallback" "$TARGET/wallpaper"
+      echo "→ fallback picture: $(basename "$fallback")"
     fi
   fi
+else
+  echo "→ no wallpaper collection found; the screen falls back to $TARGET/wallpaper"
 fi
 
 chmod -R a+rX "$TARGET"
+
+# ── Reaching the collection as the greeter user ───────────────────────────────
+# A home directory is 0700, and that stops the greeter at the very first
+# component of the path: the symlink above resolves somewhere it cannot enter.
+# chmod 0711 on the home would work but opens the way for everyone. An ACL is
+# narrower — it grants search, not reading and not listing, to this one user on
+# the directories that actually block the way.
+
+can_reach() {
+  runuser -u "$GREETER_USER" -- test -r "$1" 2>/dev/null &&
+    runuser -u "$GREETER_USER" -- test -x "$1" 2>/dev/null
+}
+
+acl_ok=yes
+acl_needed=no
+
+if [[ -n "$COLLECTION" && -d "$COLLECTION" ]] && ! can_reach "$COLLECTION"; then
+  acl_ok=no
+  acl_needed=yes
+
+  echo
+  echo "$GREETER_USER cannot reach $COLLECTION — something on the way is closed:"
+  # Judge each component by its own permissions, not by testing it as the
+  # greeter: once something up the path denies search, everything below it fails
+  # the test too, and granting them all would scatter pointless ACL entries over
+  # directories that were never in the way.
+  blockers=()
+  probe=""
+  IFS='/' read -r -a parts <<< "${COLLECTION#/}"
+  for part in "${parts[@]}"; do
+    probe="$probe/$part"
+    mode="$(stat -c %A "$probe")"
+    if [[ "${mode: -1}" != x ]]; then
+      blockers+=("$probe")
+      echo "    $probe  $mode"
+    fi
+  done
+
+  echo
+  echo "Granting search to $GREETER_USER on those, and nothing else, means:"
+  for b in "${blockers[@]}"; do
+    echo "    setfacl -m u:$GREETER_USER:--x $b"
+  done
+  echo "Other users are unaffected, and $GREETER_USER still cannot list them."
+
+  if ! command -v setfacl >/dev/null 2>&1; then
+    echo "setfacl not found — install the 'acl' package first."
+  elif ask "Grant it?"; then
+    for b in "${blockers[@]}"; do
+      setfacl -m "u:$GREETER_USER:--x" "$b"
+    done
+    if can_reach "$COLLECTION"; then
+      echo "→ $GREETER_USER can now read $COLLECTION"
+      acl_ok=yes
+    else
+      echo "→ still unreachable; the screen will fall back to $TARGET/wallpaper"
+    fi
+  else
+    echo "→ skipped"
+  fi
+fi
 
 # ── greetd's own config ───────────────────────────────────────────────────────
 
@@ -168,8 +247,11 @@ echo
 echo "    GDK_DEBUG=high-depth ags run $PROJECT/greeter/app.ts"
 echo
 
-if [[ "$config_ok" == no || "$switched" == no ]]; then
+if [[ "$config_ok" == no || "$switched" == no || "$acl_ok" == no ]]; then
   echo "Still to do by hand:"
+  if [[ "$acl_ok" == no ]]; then
+    echo "  · let $GREETER_USER reach $COLLECTION (see the setfacl lines above)"
+  fi
   if [[ "$config_ok" == no ]]; then
     echo "  · copy packaging/greetd-config.toml to $GREETD_CONF"
   fi
@@ -183,7 +265,7 @@ if [[ "$config_ok" == no || "$switched" == no ]]; then
   echo
 fi
 
-echo "The wallpaper is $TARGET/wallpaper. To change it later:"
-echo
-echo "    sudo install -m 0644 /path/to/image $TARGET/wallpaper"
-echo
+if [[ "$acl_needed" == no && -L "$TARGET/wallpapers" ]]; then
+  echo "Wallpapers come from $COLLECTION, one at random on every boot."
+  echo
+fi
