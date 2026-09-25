@@ -129,13 +129,43 @@ export function createGreeterAuth(): GreeterAuth {
 }
 
 /**
- * greetd answers every situation with a single string, and most of the time that
- * string is "Authentication failure". Rewrite the familiar ones and show the rest
- * verbatim — an opaque message beats a swallowed error.
+ * What PAM says, in words.
+ *
+ * greetd passes a PAM failure on exactly as libpam reported it: the call that
+ * failed, a colon, and the result code — `pam_authenticate: AUTH_ERR` for the
+ * ordinary case of a mistyped password, which is nearly every case. That is a
+ * line for a log, not for someone standing in front of the screen.
+ *
+ * Listed here are the codes a login screen can actually produce. The rest keep
+ * their code (see greetdMessage): they mean something is wrong with the account
+ * or with PAM itself, and then the exact word is the only clue anyone gets.
+ */
+const PAM_ERRORS: Record<string, string | undefined> = {
+  AUTH_ERR: "Wrong password",
+  USER_UNKNOWN: "No such user",
+  MAXTRIES: "Too many attempts",
+  PERM_DENIED: "Login not permitted",
+  ACCT_EXPIRED: "Account expired",
+  AUTHTOK_EXPIRED: "Password expired",
+  NEW_AUTHTOK_REQD: "The password has to be changed",
+  AUTHINFO_UNAVAIL: "Cannot check the password",
+}
+
+/**
+ * greetd answers every situation with a single string. Rewrite the familiar ones
+ * and show the rest verbatim — an opaque message beats a swallowed error.
  */
 function greetdMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error)
 
+  // The code is looked for anywhere in the string rather than at the front: gjs
+  // puts the error domain before the message, and which of libpam's functions
+  // returned the code is of no interest here.
+  const pam = raw.match(/\bpam_\w+:\s*([A-Z][A-Z_]*)/)
+  if (pam) return PAM_ERRORS[pam[1]] ?? `Could not log in (${pam[1]})`
+
+  // No code to go by: greetd's own wording, or a PAM module that writes its own
+  // message instead of returning one of the codes above.
   if (/auth/i.test(raw) && /fail|incorrect|invalid/i.test(raw)) return "Wrong password"
   if (/no such user|unknown user/i.test(raw)) return "No such user"
   if (/permission denied/i.test(raw)) return "Login not permitted"
