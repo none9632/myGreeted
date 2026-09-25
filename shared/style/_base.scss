@@ -27,7 +27,7 @@ picture.screen-bg {
 // across the whole width, so every level covers a band some 40px wide with a
 // dead-straight edge, and those edges read as a grid against the blurred
 // wallpaper. If the bands ever come back, check that the flag survived — see
-// packaging/hypr/greeter.conf and packaging/my-lock.
+// packaging/hypr/greeter.lua and packaging/my-lock.
 screen-scrim {
   background: linear-gradient(
     to right,

@@ -5,7 +5,7 @@
 #
 #   /usr/share/my-greeter/   — the application, its colours and the wallpaper
 #   /var/cache/my-greeter/   — the last selected user and session
-#   /usr/share/my-greeter/hyprland.conf — the minimal compositor for logging in
+#   /usr/share/my-greeter/hyprland.lua  — the minimal compositor for logging in
 #
 # Laying those out touches nothing else. Reaching the wallpaper collection,
 # pointing greetd at the greeter and making it the login manager do touch things
@@ -84,7 +84,10 @@ ln -sfn /usr/share/ags/js "$TARGET/node_modules/ags"
 ln -sfn /usr/share/ags/js/node_modules/gnim "$TARGET/node_modules/gnim"
 
 echo "→ installing the Hyprland config for the login screen"
-install -m 0644 "$PROJECT/packaging/hypr/greeter.conf" "$TARGET/hyprland.conf"
+# Lua, not hyprlang: 0.56 warns the old format is going away in 0.57. A config
+# left over from an install that predates the switch would only confuse.
+rm -f "$TARGET/hyprland.conf"
+install -m 0644 "$PROJECT/packaging/hypr/greeter.lua" "$TARGET/hyprland.lua"
 
 echo "→ preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
@@ -115,31 +118,31 @@ done
 rm -f "$TARGET/wallpapers"
 
 if [[ -n "$COLLECTION" ]]; then
-  # Placed next to the other env lines rather than appended at the end: the
+  # Placed next to the other hl.env calls rather than appended at the end: the
   # config is copied fresh on every run, so this is always an insert into a
   # clean file, and grouping them keeps the question of ordering from arising
   # at all.
   awk -v dir="$COLLECTION" '
-    /^env = / { last = NR }
+    /^hl\.env\(/ { last = NR }
     { lines[NR] = $0 }
     END {
       for (i = 1; i <= NR; i++) {
         print lines[i]
         if (i == last) {
           print ""
-          print "# Where the login screen takes its wallpapers from. Written by install.sh."
-          print "env = WALLPAPER_DIR," dir
+          print "-- Where the login screen takes its wallpapers from. Written by install.sh."
+          printf "hl.env(\"WALLPAPER_DIR\", \"%s\")\n", dir
         }
       }
       if (!last) {
         print ""
-        print "# Where the login screen takes its wallpapers from. Written by install.sh."
-        print "env = WALLPAPER_DIR," dir
+        print "-- Where the login screen takes its wallpapers from. Written by install.sh."
+        printf "hl.env(\"WALLPAPER_DIR\", \"%s\")\n", dir
       }
     }
-  ' "$TARGET/hyprland.conf" > "$TARGET/hyprland.conf.new"
-  mv "$TARGET/hyprland.conf.new" "$TARGET/hyprland.conf"
-  echo "→ wallpapers: $COLLECTION (recorded in $TARGET/hyprland.conf)"
+  ' "$TARGET/hyprland.lua" > "$TARGET/hyprland.lua.new"
+  mv "$TARGET/hyprland.lua.new" "$TARGET/hyprland.lua"
+  echo "→ wallpapers: $COLLECTION (recorded in $TARGET/hyprland.lua)"
 
   # One picture copied in as well, so a bare install still has something to show
   # if the directory turns out to be unreachable.

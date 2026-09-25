@@ -11,5 +11,5 @@ vt = 1
 # Hyprland expects, and without it the compositor puts a warning banner across
 # the top of the screen — on a login screen, the first thing anyone sees.
 # Everything after -- goes to Hyprland itself.
-command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.conf"
+command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.lua"
 user = "greeter"

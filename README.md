@@ -68,7 +68,7 @@ GDK_DEBUG=high-depth MY_LOCK_DEV=1 ags run ~/Projects/myGreeter/lock/app.ts
 scrim is a gradient spanning the whole screen; in 8 bits it crosses only about
 fifty levels, so each one covers a band some 40px wide with a dead-straight
 edge, and those edges read as a grid against the smooth blurred wallpaper. In
-production the flag is set for you — in `packaging/hypr/greeter.conf` for the
+production the flag is set for you — in `packaging/hypr/greeter.lua` for the
 login screen and in `packaging/my-lock` for the locker.
 
 Both use their own instance names (`my-greeter`, `my-lock`), so they run happily
@@ -132,7 +132,7 @@ Edit that one file to restyle both screens.
 
 The login screen picks one at random on every boot from `WALLPAPER_DIR` — the
 same variable `update-wall` reads, set for the greeter session by the installer
-in `/usr/share/my-greeter/hyprland.conf`. If that directory is missing or
+in `/usr/share/my-greeter/hyprland.lua`. If that directory is missing or
 unreachable it falls back to the single file `/usr/share/my-greeter/wallpaper`,
 which the installer seeds.
 
