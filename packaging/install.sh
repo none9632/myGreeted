@@ -449,11 +449,11 @@ if [[ "$lock_ok" == yes ]]; then
   title "The lock screen is in place. Nothing calls it yet — that is one line in"
   title "your own Hyprland config, wherever the locker is started:"
   echo
-  quote "hl.exec_cmd(\"swayidle -w before-sleep 'my-lock'\")"
+  quote "hl.exec_cmd(\"swayidle -w timeout 600 'my-lock' lock 'my-lock' before-sleep 'my-lock'\")"
   echo
-  title "A minute after the lock is up it suspends the machine as well; the lid,"
-  title "the built-in keyboard and the touchpad wake it again. Pass -s to change"
-  title "that minute, or -s never to keep the machine awake behind the lock."
+  title "A minute after the lock appears it suspends the machine; the lid, the"
+  title "built-in keyboard and the touchpad wake it again. Pass -s to change that"
+  title "minute, or -s never to stay awake behind the lock."
   echo
 fi
 

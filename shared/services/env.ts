@@ -20,4 +20,25 @@ export const GREETER_DEV = GLib.getenv("GREETD_SOCK") === null
  */
 export const LOCK_DEV = GLib.getenv("MY_LOCK_DEV") !== null
 
+/**
+ * Seconds the lock screen stays up before the machine is suspended, or null to
+ * stay awake behind it. my-lock's -s flag puts it here and validates it first,
+ * so a value this cannot read came from someone starting the locker by hand.
+ */
+export const LOCK_SUSPEND_DELAY = suspendDelay(GLib.getenv("MY_LOCK_SUSPEND_DELAY"))
+
+function suspendDelay(raw: string | null) {
+  if (raw === null) return 60
+  if (raw === "never") return null
+
+  const seconds = Number(raw)
+  if (!Number.isInteger(seconds) || seconds < 0) {
+    console.error(
+      `MY_LOCK_SUSPEND_DELAY: expected whole seconds or "never", got "${raw}" — using 60`,
+    )
+    return 60
+  }
+  return seconds
+}
+
 export const USER = GLib.get_user_name()

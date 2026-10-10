@@ -11,13 +11,16 @@ usage: my-lock [-s SECONDS|never]
 
   -s, --suspend-after SECONDS
         How long the lock screen stays up before the machine is suspended.
-        Default 60, or MY_LOCK_SUSPEND_DELAY if that is set. 0 suspends at
-        once, `never` leaves the machine awake behind the lock.
+        Default 60. 0 suspends at once, `never` leaves the machine awake
+        behind the lock. A key press always holds the sleep off a while
+        longer, so it cannot happen mid-password.
 EOF
 }
 
-# The flag wins over the environment: whoever typed it out meant this one run.
-delay="${MY_LOCK_SUSPEND_DELAY:-60}"
+# The countdown itself belongs to the locker — see lock/services/suspend.ts for
+# why. This only checks the value and passes it on, because a typo is worth a
+# word here and now rather than a machine that quietly never sleeps.
+delay="${MY_LOCK_SUSPEND_DELAY:-}"
 
 while (( $# )); do
   case $1 in
@@ -31,60 +34,17 @@ while (( $# )); do
   esac
 done
 
-# Checked here rather than left to `sleep`: that runs a minute later in a
-# background job nobody is watching, and a typo there would silently mean the
-# machine never sleeps.
-if [[ ! "$delay" =~ ^([0-9]+|never)$ ]]; then
-  echo "my-lock: --suspend-after wants whole seconds or 'never', not '$delay'" >&2
-  exit 2
+if [[ -n "$delay" ]]; then
+  if [[ ! "$delay" =~ ^([0-9]+|never)$ ]]; then
+    echo "my-lock: --suspend-after wants whole seconds or 'never', not '$delay'" >&2
+    exit 2
+  fi
+  export MY_LOCK_SUSPEND_DELAY="$delay"
 fi
 
 # Render at more than 8 bits per channel where the hardware allows it, so the
 # scrim gradient does not band into visible strips. See the same setting, with
 # the full reasoning, in packaging/hypr/greeter.lua.
 export GDK_DEBUG="${GDK_DEBUG:-high-depth}"
-
-# Locking leaves the machine running. Put it to sleep a minute later instead,
-# the way the lid switch does — the lock stays underneath, and waking up lands
-# on the password prompt. What can wake it is the firmware's business, not
-# ours: the lid, the built-in keyboard and the touchpad usually can, external
-# USB devices only if their port has power/wakeup enabled.
-#
-# A minute, not at once: the lock screen is what you are meant to see first —
-# that it is there, whose session it is, that the password goes in here. Going
-# to sleep on the same instant looks like the machine died.
-# --suspend-after sets the seconds; 0 sleeps at once and `never` keeps the
-# machine awake behind the lock.
-#
-# Both waits are guarded by the locker's own instance. Before the delay,
-# because a lock that never came up — no ext-session-lock in the compositor, or
-# another locker already holding it — must not put an unlocked session to
-# sleep; that wait gives up after five seconds. And after the delay, because by
-# then the password may already be in and the session back.
-locked() { ags list 2>/dev/null | grep -qx my-lock; }
-
-suspend_later() {
-  # One sleeper at a time. swayidle calls the launcher on three different
-  # occasions and the shell may call it again while the lock is already up;
-  # every one of those starts this function, and two delays left running in
-  # parallel would mean the machine suspends again right after someone woke it.
-  exec 9>"${XDG_RUNTIME_DIR:-/tmp}/my-lock.suspend"
-  flock -n 9 || return
-
-  for _ in {1..50}; do
-    locked && break
-    sleep 0.1
-  done
-  locked || return
-
-  sleep "$delay"
-  locked || return
-
-  systemctl suspend
-}
-
-if [[ -z "$MY_LOCK_DEV" && "$delay" != never ]] && command -v systemctl >/dev/null; then
-  suspend_later &
-fi
 
 exec ags run "${MY_GREETER_DIR:-$HOME/Projects/myGreeter}/lock/app.ts"

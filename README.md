@@ -138,17 +138,12 @@ points at it, and `MY_GREETER_DIR` overrides where it looks.
 Nothing calls it yet. Replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
 
 ```lua
-hl.exec_cmd("swayidle -w before-sleep 'my-lock'")
+hl.exec_cmd("swayidle -w timeout 600 'my-lock' lock 'my-lock' before-sleep 'my-lock'")
 ```
 
-A minute after the lock is up the launcher suspends the machine, the way the
-lid switch does: the lock stays underneath and waking up lands on the password
-prompt. The minute is there so the lock screen is what you see first — sleeping
-on the same instant looks like the machine died. Nothing happens if the
-password went in before the minute was up, or if the lock failed to start — an
-unlocked session must not be put to sleep. `MY_LOCK_DEV` skips it too.
-
-The minute is what `-s` changes:
+A minute after the lock appears the machine suspends itself, the way the lid
+switch does: the lock stays underneath and waking up lands on the password
+prompt. `-s` changes that minute:
 
 ```bash
 my-lock -s 300      # five minutes of lock screen first
@@ -156,16 +151,19 @@ my-lock -s 0        # sleep as soon as the lock is up
 my-lock -s never    # stay awake behind the lock
 ```
 
-`MY_LOCK_SUSPEND_DELAY` sets the same thing for runs that have nowhere to put a
-flag, and the flag wins over it.
+The countdown lives in the locker rather than in swayidle or in the launcher,
+and [lock/services/suspend.ts](lock/services/suspend.ts) says why at length.
+The short of it: two deadlines, the later one wins. One is the lock appearing
+plus the minute, the other is the last key press plus fifteen seconds. So a
+brushed touchpad does not postpone anything — it is not a reason to stay
+awake — while a password being typed does, and the machine cannot fall asleep
+under your hands. An idle daemon cannot draw that distinction: to it any input
+resets everything, and one nudge of the mouse would put the sleep a full idle
+period away.
 
-Only one sleeper runs at a time, held by a lock file in `XDG_RUNTIME_DIR`:
-swayidle calls the launcher on three different occasions, and two delays in
-parallel would suspend the machine again right after someone woke it.
-
-What can wake it up is the firmware's business rather than this repository's.
-The lid, the built-in keyboard and the touchpad normally can; an external USB
-mouse or keyboard only if its port is allowed to:
+Waking up is the firmware's business rather than this repository's. The lid, the
+built-in keyboard and the touchpad normally can; an external USB mouse or
+keyboard only if its port is allowed to:
 
 ```bash
 # which devices may wake the machine — "enabled" is the ones that can

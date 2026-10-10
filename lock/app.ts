@@ -4,7 +4,8 @@ import { timeout } from "ags/time"
 import Gdk from "gi://Gdk"
 import Gtk4SessionLock from "gi://Gtk4SessionLock"
 import style from "./style.scss"
-import { LOCK_DEV } from "../shared/services/env"
+import { LOCK_DEV, LOCK_SUSPEND_DELAY } from "../shared/services/env"
+import { createIdleSuspend } from "./services/suspend"
 import { currentUser } from "../shared/services/users"
 import LockWindow, { LockContent } from "./widget/LockWindow"
 import type { User } from "../shared/widget/UserPicker"
@@ -41,6 +42,7 @@ function lockSession(user: User) {
   }
 
   const lock = Gtk4SessionLock.Instance.new()
+  const idle = createIdleSuspend({ live: true, delay: LOCK_SUSPEND_DELAY ?? 0 })
 
   // One surface per monitor. The signal fires once for every screen that exists
   // when the lock starts, and then for each one plugged in afterwards; the
@@ -49,11 +51,24 @@ function lockSession(user: User) {
     const window = new Gtk.Window({ application: app, name: "lock" })
     window.add_css_class("Lock")
     window.set_child(LockContent({ user, onUnlock: () => lock.unlock() }) as Gtk.Widget)
+
+    // Every key press on every surface holds off the suspend. The controller
+    // watches the capture phase and hands the event on untouched: the password
+    // field must still receive it, this only needs to know it happened.
+    const keys = new Gtk.EventControllerKey()
+    keys.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+    keys.connect("key-pressed", () => {
+      idle.bump()
+      return false
+    })
+    window.add_controller(keys)
+
     lock.assign_window_to_monitor(window, monitor)
   })
 
   lock.connect("failed", () => {
     console.error("could not lock the session: someone else is holding the lock")
+    idle.cancel()
     app.quit()
   })
 
@@ -71,10 +86,18 @@ function lockSession(user: User) {
   // One turn of the main loop later, unlock() has finished: it sends the
   // request and waits out a Wayland roundtrip itself, so by then the lock is
   // well and truly gone and there is nothing left to leave behind.
-  lock.connect("unlocked", () => timeout(0, () => app.quit()))
+  lock.connect("unlocked", () => {
+    idle.cancel()
+    timeout(0, () => app.quit())
+  })
 
   if (!lock.lock()) {
     console.error("could not lock the session")
     app.quit()
+    return
   }
+
+  // Only once the lock is really up: a session that could not be locked must
+  // not be put to sleep.
+  if (LOCK_SUSPEND_DELAY !== null) idle.start()
 }
