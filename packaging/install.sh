@@ -451,6 +451,10 @@ if [[ "$lock_ok" == yes ]]; then
   echo
   quote "hl.exec_cmd(\"swayidle -w before-sleep 'my-lock'\")"
   echo
+  title "A minute after the lock is up it suspends the machine as well; the lid,"
+  title "the built-in keyboard and the touchpad wake it again. Pass -s to change"
+  title "that minute, or -s never to keep the machine awake behind the lock."
+  echo
 fi
 
 if [[ "$acl_needed" == no && -n "$COLLECTION" ]]; then

@@ -141,6 +141,37 @@ Nothing calls it yet. Replace `hyprlock` in `~/.config/hypr/hyprland.lua`:
 hl.exec_cmd("swayidle -w before-sleep 'my-lock'")
 ```
 
+A minute after the lock is up the launcher suspends the machine, the way the
+lid switch does: the lock stays underneath and waking up lands on the password
+prompt. The minute is there so the lock screen is what you see first — sleeping
+on the same instant looks like the machine died. Nothing happens if the
+password went in before the minute was up, or if the lock failed to start — an
+unlocked session must not be put to sleep. `MY_LOCK_DEV` skips it too.
+
+The minute is what `-s` changes:
+
+```bash
+my-lock -s 300      # five minutes of lock screen first
+my-lock -s 0        # sleep as soon as the lock is up
+my-lock -s never    # stay awake behind the lock
+```
+
+`MY_LOCK_SUSPEND_DELAY` sets the same thing for runs that have nowhere to put a
+flag, and the flag wins over it.
+
+Only one sleeper runs at a time, held by a lock file in `XDG_RUNTIME_DIR`:
+swayidle calls the launcher on three different occasions, and two delays in
+parallel would suspend the machine again right after someone woke it.
+
+What can wake it up is the firmware's business rather than this repository's.
+The lid, the built-in keyboard and the touchpad normally can; an external USB
+mouse or keyboard only if its port is allowed to:
+
+```bash
+# which devices may wake the machine — "enabled" is the ones that can
+grep . /sys/bus/usb/devices/*/power/wakeup
+```
+
 ## Colours
 
 `colors.scss` holds doom-one — the same palette myBar, rofi and hyprlock use.
