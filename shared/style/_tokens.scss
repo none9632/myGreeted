@@ -57,6 +57,21 @@ $entry-step:    55ms; // the gap between one block and the next
 $entry-rise:    18px; // how far a block travels on its way up
 $entry-zoom:     1.05; // the wallpaper's starting scale
 
+// "Invisible" — where every fading block of the entrance starts. A hair of
+// opacity rather than none, because zero is not a dimmer setting to GSK: an
+// opacity-0 subtree is skipped outright, never drawn, and its shaders therefore
+// never compiled. At zero the wallpaper, the scrim and every block of the column
+// are first drawn on the opening frame of the entrance — which is where their
+// compilation lands as well. Measured here: 177ms of it inside a 420ms
+// transition, so most of the entrance passes in a single jump.
+//
+// A hair above zero draws the whole screen on the very first frame instead,
+// where the wait in Screen.tsx is already there to absorb it, and the frames of
+// the entrance itself then cost under 2ms each. 1/255 is the threshold below
+// which GTK rounds opacity down to nothing; this is clear of it and still
+// invisible against $bg-deep.
+$entry-hidden:  0.01;
+
 // The exit, once the password is accepted. Much shorter than the entrance and
 // not a procession: by then the only thing wanted is the session behind it, and
 // the compositor keeps the screen locked for every millisecond of this. The

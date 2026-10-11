@@ -24,5 +24,22 @@ vt = 1
 # survives — but only because none of it needs quoting. Anything quoted here
 # would lose its quotes on the way, see sessionCommand() in
 # greeter/services/auth.ts.
-command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.lua >/var/cache/my-greeter/session.log 2>&1"
+#
+# The greeter user's home directory is `/`, and it cannot write there, so
+# everything that wants a cache gives up on having one. The session log says so
+# itself, once for Hyprland's renderer and once for the one inside ags:
+#
+#     Failed to create //.cache for shader cache (Permission denied)---disabling
+#
+# Without that cache the driver compiles every shader afresh on every boot, and
+# the bill arrives on the first frame ags draws — the frame the entrance
+# animation waits for. Measured here it is the difference between a quarter of a
+# second and sixty milliseconds, which is the difference between an entrance that
+# plays and one that arrives in two jumps. XDG_CACHE_HOME points both processes
+# at the directory the greeter already owns; what lands there outlives the
+# reboot, so only the first boot after installing pays the full price.
+#
+# It is set here and not in hyprland.lua because hl.env only reaches what
+# Hyprland starts, and Hyprland's own renderer needs the cache just as much.
+command = "XDG_CACHE_HOME=/var/cache/my-greeter start-hyprland -- -c /usr/share/my-greeter/hyprland.lua >/var/cache/my-greeter/session.log 2>&1"
 user = "greeter"

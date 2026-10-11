@@ -48,10 +48,16 @@ screen-content {
 //
 // The motion is transform and opacity only — neither touches layout, so nothing
 // reflows while it runs and the column never jumps under a cursor or a caret.
+//
+// Nothing here starts at opacity 0 — the starting point is $entry-hidden, and
+// the reason it is not zero is written next to that token: zero would keep the
+// screen from being drawn at all until the entrance began, and the entrance
+// would then pay for drawing it. The exit below does use zero: by then
+// everything on screen has been drawn for a while.
 
 // A block of the column: rises into place, $entry-step later than the one before.
 @mixin rises($step) {
-  opacity: 0;
+  opacity: $entry-hidden;
   transform: translateY($entry-rise);
   transition:
     opacity $dur-entry $ease-out $entry-step * $step,
@@ -67,7 +73,7 @@ screen-content {
 // settling while the column is already readable. The scrim comes up with it, so
 // the picture darkens as it arrives instead of being dark first and then shown.
 picture.screen-bg {
-  opacity: 0;
+  opacity: $entry-hidden;
   transform: scale($entry-zoom);
   transition:
     opacity $dur-entry-bg $ease-out,
@@ -75,7 +81,7 @@ picture.screen-bg {
 }
 
 screen-scrim {
-  opacity: 0;
+  opacity: $entry-hidden;
   transition: opacity $dur-entry-bg $ease-out;
 }
 

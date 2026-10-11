@@ -34,8 +34,16 @@ const WALLPAPER_BLEED = 3 * WALLPAPER_BLUR
 // Frame interval, in microseconds, at or below which the renderer counts as up
 // to speed — a little over one frame of a 60Hz screen. And the point past which
 // the entrance starts whether it is or not.
+//
+// A second is a long deadline for something measured in frames, and it is long
+// on purpose: what it has to sit out is the first drawing of the screen, and the
+// first one compiles every shader it needs. With a warm shader cache that is
+// around 60ms; with a cold one — the login screen's, on the first boot after
+// installing — it is a quarter of a second and more. Up to then the screen is
+// flat $bg-deep, which at boot is the black the firmware already left there, so
+// waiting costs nothing visible, while starting early costs the whole entrance.
 const FRAME_SETTLED = 20_000
-const ENTRANCE_DEADLINE = 400_000
+const ENTRANCE_DEADLINE = 1_000_000
 
 /**
  * The wallpaper, decoded small and blurred once.
@@ -124,6 +132,13 @@ export default function Screen(props: ScreenProps) {
   //
   // The deadline is there because a screen nobody can see is worse than a jerky
   // one: if the frames never settle, the entrance starts regardless.
+  //
+  // This is also the only thing standing between the entrance and the shader
+  // compilation of the first drawn frame, and it can only do that because the
+  // first frame draws the whole screen — see $entry-hidden in
+  // shared/style/_tokens.scss, which is why none of it starts at opacity 0.
+  // Were the screen invisible until .shown, the expensive frame would be the
+  // entrance's own first one and no amount of waiting here would help.
   onMount(() => {
     let first = 0
     let previous = 0

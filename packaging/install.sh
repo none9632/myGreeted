@@ -4,7 +4,8 @@
 # home directory, so ~ is out):
 #
 #   /usr/share/my-greeter/   — the application, its colours and the wallpaper
-#   /var/cache/my-greeter/   — the last selected user and session
+#   /var/cache/my-greeter/   — the last selected user and session, and the
+#                              shader cache the greeter has nowhere else to keep
 #   /usr/share/my-greeter/hyprland.lua  — the minimal compositor for logging in
 #
 # Laying those out touches nothing else. Reaching the wallpaper collection,
@@ -127,6 +128,9 @@ step "installing the Hyprland config for the login screen"
 rm -f "$TARGET/hyprland.conf"
 install -m 0644 "$PROJECT/packaging/hypr/greeter.lua" "$TARGET/hyprland.lua"
 
+# The greeter's state lives here, and so does its shader cache: XDG_CACHE_HOME
+# in greetd's config points at this directory, because the user's home is `/` and
+# unwritable. See packaging/greetd-config.toml for what that costs otherwise.
 step "preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
 
