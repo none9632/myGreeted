@@ -70,6 +70,27 @@ hl.config({
 -- diagnostic one, and there is no other way to ask for it.
 hl.env("GDK_DEBUG", "high-depth")
 
+-- Somewhere to keep the compiled shaders. The greeter user's home directory is
+-- `/` and it cannot write there, so everything that wants a cache gives up on
+-- having one — the session log says so itself, once for Hyprland's renderer and
+-- once for the one inside ags:
+--
+--     Failed to create //.cache for shader cache (Permission denied)---disabling
+--
+-- Without that cache the driver compiles every shader afresh on every boot, and
+-- the bill arrives on the first frame ags draws — the frame the entrance
+-- animation waits for. Measured here it is the difference between a quarter of a
+-- second and sixty milliseconds, which is the difference between an entrance
+-- that plays and one that arrives in two jumps. This directory the greeter
+-- already owns, and what lands in it outlives the reboot, so only the first boot
+-- after installing pays the full price.
+--
+-- Set here rather than in greetd's config, where a variable in front of the
+-- command breaks the login altogether (the comment there has the details). It is
+-- read from the config before the renderer starts, so Hyprland itself gets the
+-- cache as well as what it launches.
+hl.env("XDG_CACHE_HOME", "/var/cache/my-greeter")
+
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("XDG_SESSION_TYPE", "wayland")

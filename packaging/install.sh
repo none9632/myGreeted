@@ -129,8 +129,8 @@ rm -f "$TARGET/hyprland.conf"
 install -m 0644 "$PROJECT/packaging/hypr/greeter.lua" "$TARGET/hyprland.lua"
 
 # The greeter's state lives here, and so does its shader cache: XDG_CACHE_HOME
-# in greetd's config points at this directory, because the user's home is `/` and
-# unwritable. See packaging/greetd-config.toml for what that costs otherwise.
+# in hyprland.lua points at this directory, because the user's home is `/` and
+# unwritable. See packaging/hypr/greeter.lua for what that costs otherwise.
 step "preparing $CACHE for the $GREETER_USER user"
 install -d -m 0755 -o "$GREETER_USER" -g "$GREETER_USER" "$CACHE"
 

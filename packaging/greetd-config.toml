@@ -25,21 +25,17 @@ vt = 1
 # would lose its quotes on the way, see sessionCommand() in
 # greeter/services/auth.ts.
 #
-# The greeter user's home directory is `/`, and it cannot write there, so
-# everything that wants a cache gives up on having one. The session log says so
-# itself, once for Hyprland's renderer and once for the one inside ags:
+# A shell runs this line, but the first word of it is not the shell's to resolve:
+# greetd looks it up as a program before handing anything over, and what it finds
+# is what the shell is given. So an environment variable cannot be set by writing
+# it in front of the command, the way one would at a prompt — greetd takes
+# `VAR=value` for the program name, fails to find it, resolves it against the
+# greeter's home directory and the shell is left with this:
 #
-#     Failed to create //.cache for shader cache (Permission denied)---disabling
+#     /bin/sh: line 1: /XDG_CACHE_HOME=/var/cache/my-greeter: No such file...
 #
-# Without that cache the driver compiles every shader afresh on every boot, and
-# the bill arrives on the first frame ags draws — the frame the entrance
-# animation waits for. Measured here it is the difference between a quarter of a
-# second and sixty milliseconds, which is the difference between an entrance that
-# plays and one that arrives in two jumps. XDG_CACHE_HOME points both processes
-# at the directory the greeter already owns; what lands there outlives the
-# reboot, so only the first boot after installing pays the full price.
-#
-# It is set here and not in hyprland.lua because hl.env only reaches what
-# Hyprland starts, and Hyprland's own renderer needs the cache just as much.
-command = "XDG_CACHE_HOME=/var/cache/my-greeter start-hyprland -- -c /usr/share/my-greeter/hyprland.lua >/var/cache/my-greeter/session.log 2>&1"
+# which is greetd exiting without a session, five times in a row, and systemd
+# giving up on it — a machine with no way to log in. The greeter's environment is
+# set in hyprland.lua with hl.env instead; see the shader cache there.
+command = "start-hyprland -- -c /usr/share/my-greeter/hyprland.lua >/var/cache/my-greeter/session.log 2>&1"
 user = "greeter"
