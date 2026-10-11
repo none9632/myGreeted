@@ -91,13 +91,19 @@ function lockSession(user: User) {
     timeout(0, () => app.quit())
   })
 
+  // Only once the lock is really up: a session that could not be locked must
+  // not be put to sleep. This is what "really up" means — lock() only starts
+  // the acquisition, while this signal is the compositor saying the lock
+  // surfaces are on screen. With a delay of zero the difference is the whole
+  // story: counting from lock() would suspend the machine while the session
+  // was still unlocked.
+  lock.connect("locked", () => {
+    if (LOCK_SUSPEND_DELAY !== null) idle.start()
+  })
+
   if (!lock.lock()) {
     console.error("could not lock the session")
     app.quit()
     return
   }
-
-  // Only once the lock is really up: a session that could not be locked must
-  // not be put to sleep.
-  if (LOCK_SUSPEND_DELAY !== null) idle.start()
 }

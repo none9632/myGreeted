@@ -11,9 +11,11 @@ usage: my-lock [-s SECONDS|never]
 
   -s, --suspend-after SECONDS
         How long the lock screen stays up before the machine is suspended.
-        Default 60. 0 suspends at once, `never` leaves the machine awake
-        behind the lock. A key press always holds the sleep off a while
-        longer, so it cannot happen mid-password.
+        Default 60. 0 suspends as soon as the lock is up, `never` leaves
+        the machine awake behind it. A key press always holds the sleep off a
+        while longer, so it cannot happen mid-password, and a machine that
+        has just woken up gets the same breathing room before it can sleep
+        again.
 EOF
 }
 

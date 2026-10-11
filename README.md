@@ -180,6 +180,11 @@ my-lock -s 0        # sleep as soon as the lock is up
 my-lock -s never    # stay awake behind the lock
 ```
 
+A machine that has just woken up never sleeps again sooner than fifteen
+seconds later, however short `-s` is: the key that wakes it goes to the
+firmware and not to the locker, so without that floor `-s 0` would put the
+machine back down before the password field ever saw a keystroke.
+
 The countdown lives in the locker rather than in swayidle or in the launcher,
 and [lock/services/suspend.ts](lock/services/suspend.ts) says why at length.
 The short of it: two deadlines, the later one wins. One is the lock appearing
