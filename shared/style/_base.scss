@@ -11,13 +11,6 @@ window.Lock {
   font-family: $font;
 }
 
-// The wallpaper. We blur it ourselves: Hyprland's layer-rule blur blurs whatever
-// sits BEHIND the surface, and the picture lives inside it. Keyed to hyprlock
-// (blur_size 10, blur_passes 3), folded into a single GTK pass.
-picture.screen-bg {
-  filter: blur(16px);
-}
-
 // Dimming. Not a flat film but a gradient: the left edge, where the rail and the
 // column live, goes nearly black, while the picture stays readable on the right.
 // It also props up the asymmetry — the dark side is the text side.
@@ -38,19 +31,153 @@ screen-scrim {
   );
 }
 
-screen-body {
-  // The whole screen fades in: content appears a frame after the window maps,
-  // with the .shown class set from Screen.tsx.
-  opacity: 0;
-  transition: opacity $dur-slow $ease-out;
-
-  &.shown {
-    opacity: 1;
-  }
-}
-
 screen-content {
   min-width: $col-width;
   margin-left: $content-inset;
   margin-right: $content-inset;
+}
+
+// ── Entrance ──────────────────────────────────────────────────────────────────
+// Everything below is about one moment: the screen arriving. A frame after the
+// window maps, Screen.tsx sets .shown on the root, and every rule here is the
+// difference between the state before that class and the state after it.
+//
+// It is kept together rather than spread over the component partials because it
+// is choreography: what matters is the order the blocks arrive in, and that can
+// only be read in one place. The blocks themselves know nothing about it.
+//
+// The motion is transform and opacity only — neither touches layout, so nothing
+// reflows while it runs and the column never jumps under a cursor or a caret.
+
+// A block of the column: rises into place, $entry-step later than the one before.
+@mixin rises($step) {
+  opacity: 0;
+  transform: translateY($entry-rise);
+  transition:
+    opacity $dur-entry $ease-out $entry-step * $step,
+    transform $dur-entry $ease-out $entry-step * $step;
+
+  screen.shown & {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// The wallpaper comes out of a slight zoom — the slowest thing on screen, still
+// settling while the column is already readable. The scrim comes up with it, so
+// the picture darkens as it arrives instead of being dark first and then shown.
+picture.screen-bg {
+  opacity: 0;
+  transform: scale($entry-zoom);
+  transition:
+    opacity $dur-entry-bg $ease-out,
+    transform $dur-entry-bg $ease-out;
+}
+
+screen-scrim {
+  opacity: 0;
+  transition: opacity $dur-entry-bg $ease-out;
+}
+
+screen.shown {
+  picture.screen-bg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  screen-scrim {
+    opacity: 1;
+  }
+}
+
+// The rail slides out of the left edge, shadow and all. It leads the column: the
+// frame of the screen arrives before what is written inside it.
+rail {
+  transform: translateX(-$rail-width);
+  transition: transform $dur-entry $ease-out;
+
+  screen.shown & {
+    transform: translateX(0);
+  }
+}
+
+// The column, top to bottom. The clock first — it is the thing being read while
+// the rest is still arriving.
+clock-time { @include rises(1); }
+clock-date { @include rises(2); }
+
+// The rule draws itself instead of rising: it fills from the left edge, the same
+// gesture the password underline makes on focus. scaleX rather than min-width so
+// that it cannot push the blocks below it around while it grows.
+accent-rule {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform $dur-entry $ease-out $entry-step * 3;
+
+  screen.shown & {
+    transform: scaleX(1);
+  }
+}
+
+user-row    { @include rises(4); }
+user-single { @include rises(4); }
+password-row { @include rises(5); }
+
+// Login screen only, and last: the session picker is the one block nobody is
+// waiting for.
+session-picker { @include rises(6); }
+
+// ── Exit ──────────────────────────────────────────────────────────────────────
+// The way out, after the password is accepted. The entrance reversed and cut
+// short: everything leaves at once rather than in turn, on a curve that gathers
+// speed instead of settling, and the column keeps going the way it came in.
+//
+// Every millisecond of this is time the session is still locked — the compositor
+// holds the lock until the locker asks, and it only asks once this has played
+// (EXIT_MS in lock/widget/LockWindow.tsx). That is the whole budget for the
+// exit, and why it is a third of the entrance.
+//
+// The wallpaper is the one thing that does not leave. Behind a session-lock
+// surface there is nothing — the compositor shows the session again only once
+// the lock is released — so a screen that faded out would be a blackout, and the
+// session would then appear out of it. Instead the dimming lifts: the picture
+// stays, brightens, pushes away a little, and the session takes over from a lit
+// screen rather than from a dark one. Both carry the same wallpaper, so what is
+// seen at the cut is a blurred picture coming into focus.
+//
+// These rules carry the same weight as the entrance ones above and win by coming
+// after them, which is also the order they happen in.
+screen.leaving {
+  picture.screen-bg {
+    transform: scale($exit-zoom);
+    transition: transform $dur-exit $ease-in $exit-step;
+  }
+
+  screen-scrim {
+    opacity: 0;
+    transition: opacity $dur-exit $ease-in $exit-step;
+  }
+
+  rail {
+    transform: translateX(-$rail-width);
+    transition: transform $dur-exit $ease-in;
+  }
+
+  clock-time,
+  clock-date,
+  user-row,
+  user-single,
+  password-row,
+  session-picker {
+    opacity: 0;
+    transform: translateY(-$exit-rise);
+    transition:
+      opacity $dur-exit $ease-in,
+      transform $dur-exit $ease-in;
+  }
+
+  accent-rule {
+    transform: scaleX(0);
+    transition: transform $dur-exit $ease-in;
+  }
 }

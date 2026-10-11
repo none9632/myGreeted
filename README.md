@@ -10,6 +10,35 @@ content column. Nothing is centred; the grid is set by a short accent rule under
 the date. The password field is not a box but a line whose underline fills with
 the accent on focus and turns red on a wrong password.
 
+Neither screen simply appears. The wallpaper settles out of a slight zoom, the
+rail slides in from the left edge, and the blocks of the column rise one after
+another — about 0.8s from the first frame to the last block, with the password
+field focused throughout, so it can be typed into while the rest is still
+arriving. The whole choreography is one section of `shared/style/_base.scss`.
+
+Two things in [Screen.tsx](shared/widget/Screen.tsx) are there to make it
+watchable rather than merely correct, and both were found by measuring frames on
+this panel (2520x1680 at 10 bpc):
+
+- **The wallpaper is blurred once, not per frame.** `filter: blur()` in CSS
+  makes GTK render the full-screen picture into an offscreen and blur it again
+  every time anything above it moves, which held the entrance to 10-25 frames a
+  second — all of it on screen, in half a dozen jumps. The file is now decoded
+  small and blurred once on the GPU, and the same entrance runs at 60.
+- **It starts on the first frame that arrives at full speed**, not on a timer
+  and not on the first frame. Early frames come tens of milliseconds apart —
+  textures uploaded, shaders built — and a transition started on one of them is
+  a third over before the screen has drawn twice.
+
+The lock screen leaves the same way, in a third of the time: once the password
+is accepted the column and the rail sweep out and the dimming lifts, and only
+then is the session unlocked — the compositor holds the lock for every
+millisecond of it, which is the whole budget. The wallpaper itself does not
+fade: behind a session-lock surface there is nothing to fade to, so a screen
+that dissolved would black out and the session would appear out of the dark.
+Instead the lights come up on it. Escape does the same thing in `MY_LOCK_DEV=1`
+— without a password there is no other way to watch the exit.
+
 The styles, widgets and services are shared; only the set of blocks in the column
 differs:
 

@@ -41,6 +41,31 @@ $dur-slow:   320ms;
 $ease-out:    cubic-bezier(0.23, 1, 0.32, 1);    // easeOutQuint
 $ease-macos:  cubic-bezier(0.25, 1, 0.5, 1);     // macos
 $ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); // overshoot, like myBar's slider knob
+$ease-in:     cubic-bezier(0.4, 0, 1, 1);        // the mirror of $ease-out: gathers speed, for leaving
+
+// The entrance. Neither screen appears all at once: the wallpaper settles out of
+// a slight zoom, the rail slides in from the left edge, and the blocks of the
+// column rise one after another. The choreography itself — which block moves
+// when — is in _base.scss; these are only its measures.
+//
+// The last block is in place a little under 0.8s after the window maps, which is
+// the ceiling worth having: the password field takes focus on mount, so anything
+// slower would still be moving under someone already typing.
+$dur-entry:    420ms; // one block of the column
+$dur-entry-bg: 820ms; // the wallpaper, which has further to go and is behind everything
+$entry-step:    55ms; // the gap between one block and the next
+$entry-rise:    18px; // how far a block travels on its way up
+$entry-zoom:     1.05; // the wallpaper's starting scale
+
+// The exit, once the password is accepted. Much shorter than the entrance and
+// not a procession: by then the only thing wanted is the session behind it, and
+// the compositor keeps the screen locked for every millisecond of this. The
+// locker waits it out before asking for the unlock, so these numbers and
+// EXIT_MS in lock/widget/LockWindow.tsx have to agree.
+$dur-exit:     240ms; // everything on screen, at once
+$exit-step:     40ms; // the wallpaper leaves a moment behind the column
+$exit-rise:     10px; // the column keeps going the way it came in
+$exit-zoom:      1.04; // the wallpaper pushes away as it goes
 
 // Type scale. The clock is large and thin — it anchors the whole composition.
 $size-time:    96px;
