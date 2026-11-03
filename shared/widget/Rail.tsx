@@ -1,5 +1,6 @@
 import { Gtk } from "ags/gtk4"
 import type { Accessor } from "gnim"
+import { inkCentre } from "./inkCentre"
 
 // ── Rail ──────────────────────────────────────────────────────────────────────
 // The column at the left edge, identical on both screens: power at the top, the
@@ -13,12 +14,19 @@ export interface RailProps {
   onReboot?: () => void
 }
 
-function RailButton(props: { glyph: string; danger?: boolean; onClicked?: () => void }) {
+function RailButton(props: {
+  glyph: string
+  /** Extra style class, for tuning one glyph in _rail.scss. */
+  class?: string
+  danger?: boolean
+  onClicked?: () => void
+}) {
   return (
     <button
       cssName="rail-button"
-      class={props.danger ? "danger" : ""}
+      class={[props.danger ? "danger" : "", props.class ?? ""].filter(Boolean).join(" ")}
       halign={Gtk.Align.CENTER}
+      layoutManager={inkCentre()}
       onClicked={() => props.onClicked?.()}
     >
       <label cssName="rail-glyph" label={props.glyph} />
@@ -31,7 +39,7 @@ export default function Rail(props: RailProps) {
     <centerbox cssName="rail" orientation={Gtk.Orientation.VERTICAL}>
       <box $type="start" orientation={Gtk.Orientation.VERTICAL} spacing={8}>
         <RailButton glyph="󰐥" danger onClicked={props.onPoweroff} />
-        <RailButton glyph="󰜉" onClicked={props.onReboot} />
+        <RailButton glyph="󰜉" class="reboot" onClicked={props.onReboot} />
       </box>
       <box $type="center" />
       <box $type="end" orientation={Gtk.Orientation.VERTICAL}>

@@ -31,14 +31,20 @@ rail-button {
   rail-glyph {
     font-family: $font-glyph;
     font-size: $size-glyph-lg;
-    // Pulls the glyph back to the circle's true centre — see
-    // $glyph-optical-shift in _tokens.scss.
-    margin-right: $glyph-optical-shift;
   }
 
   &:hover {
     background: $chip-bg;
     color: $fg;
+  }
+
+  // The reboot icon is a ring with an arrowhead standing up out of its top. The
+  // ink centring in inkCentre.ts centres the whole of that, ring and arrow, which
+  // leaves the ring itself — what the eye measures against the disc — some 2px
+  // low, and the disc looking as if it had slid up. Lifted by half that —
+  // picked by eye, between centring the ring and centring the whole icon.
+  &.reboot rail-glyph {
+    transform: translateY(-1px);
   }
 
   // Powering off is the one action that cannot be taken back: highlight it red.
