@@ -23,6 +23,10 @@ app.start({
   instanceName: "my-lock",
   css: style,
   main() {
+    // GTK rings the bell on Backspace in an empty field, and since 4.24 that
+    // bell is an actual sound. A lock screen has no use for it.
+    Gtk.Settings.get_default()!.gtkErrorBell = false
+
     const user = currentUser()
 
     if (LOCK_DEV) {
